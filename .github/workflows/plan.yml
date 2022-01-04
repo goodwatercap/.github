@@ -39,11 +39,14 @@ jobs:
           terraform_version: ${{ inputs.tf_version }}
           terraform_wrapper: false
 
-		  - uses: google-github-actions/auth@v0
+		  - name: auth
+        uses: google-github-actions/auth@v0
 				with:
-					credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+					credentials_json: ${{ secrets.gcp_service_account_key }}
 
-			- uses: google-github-actions/setup-gcloud@v0
+			- uses: 'google-github-actions/setup-gcloud@v0'
+        with:
+          project_id: ${{ inputs.gcp_project_id }}
 
       - run: |-
           gcloud --quiet auth configure-docker
