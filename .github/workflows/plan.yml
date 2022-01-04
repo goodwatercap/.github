@@ -5,23 +5,23 @@ on:
   workflow_call:
     inputs:
       tf_version:  # 0.15.5
-        required: false
+        required: true
         type: string
       gcp_project_id:
-        required: false
+        required: true
         type: string
       oasis_environment:
-        required: false
+        required: true
         type: string
     secrets:
       CI_BOT_SSH_PRIVATE_KEY:
-        required: false
+        required: true
       OASIS_REGION:
-        required: false
+        required: true
       gcp_service_account_key:
-        required: false
+        required: true
       k8s_cluster_id:
-        required: false
+        required: true
 
 jobs:
   Plan:
