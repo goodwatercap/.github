@@ -39,10 +39,6 @@ jobs:
           terraform_version: ${{ inputs.tf_version }}
           terraform_wrapper: false
 
-			- uses: google-github-actions/auth@v0
-				with:
-					project_id: ${{ inputs.gcp_project_id }}
-
       - uses: google-github-actions/setup-gcloud@v0 # terraform-bot
         with:
           project_id: ${{ inputs.gcp_project_id }}
