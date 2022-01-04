@@ -25,7 +25,6 @@ on:
 
 jobs:
   Plan:
-    env:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
