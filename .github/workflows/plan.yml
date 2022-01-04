@@ -41,7 +41,7 @@ jobs:
 
 			- uses: google-github-actions/auth@v0
 				with:
-					credentials_json: ${{ secrets.gcp_service_account_key }}
+					project_id: ${{ inputs.gcp_project_id }}
 
       - uses: google-github-actions/setup-gcloud@v0 # terraform-bot
         with:
