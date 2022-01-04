@@ -1,1 +1,119 @@
-# Placeholder
+# TODO: document me.
+name: "Plan"
+
+on:
+  workflow_call:
+    inputs:
+      tf_version:  # 0.15.5
+        required: false
+        type: string
+      gcp_project_id:
+        required: false
+        type: string
+      oasis_environment:
+        required: false
+        type: string
+    secrets:
+      CI_BOT_SSH_PRIVATE_KEY:
+        required: false
+      OASIS_REGION:
+        required: false
+      gcp_service_account_key:
+        required: false
+      k8s_cluster_id:
+        required: false
+
+jobs:
+  Plan:
+    env:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: webfactory/ssh-agent@v0.4.1
+        with:
+          ssh-private-key: ${{ secrets.CI_BOT_SSH_PRIVATE_KEY }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1.2.1
+        with:
+          terraform_version: ${{ inputs.tf_version }}
+          terraform_wrapper: false
+
+      - uses: google-github-actions/setup-gcloud@v0 # terraform-bot
+        with:
+          project_id: ${{ inputs.gcp_project_id }}
+          service_account_key: ${{ secrets.gcp_service_account_key }}
+          export_default_credentials: true
+
+      - run: |-
+          gcloud --quiet auth configure-docker
+      # Get the GKE credentials, so we can plan against the cluster
+      - run: |-
+          gcloud container clusters get-credentials ${{ secrets.k8s_cluster_id }} --zone ${{ secrets.OASIS_REGION }}
+
+      - name: Terraform fmt
+        id: fmt
+        run: |-
+          output=$(terraform fmt -diff -no-color)
+          output="${output//$'\n'/\%0A}"
+          if [[ -z $output ]]; then output="No formatting errors found."; fi
+          echo "::set-output name=stdout::$output"
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: |-
+          terraform init -backend-config="bucket=${{ inputs.gcp_project_id }}-terraform-state" -reconfigure
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -input=false -no-color -out=terraform.plan -var='oasis_environment=${{ input.oasis_environment }}'
+        continue-on-error: true
+
+      - id: show_plan
+        run: |-
+          output=$(terraform show -no-color terraform.plan)
+          output="${output//$'\n'/\%0A}"
+          echo "::set-output name=stdout::$output"
+
+      - uses: actions/github-script@v2.0.1
+        env:
+          FMT_OUT: ${{ steps.fmt.outputs.stdout }}
+          PLAN_OUT: ${{ steps.show_plan.outputs.stdout }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Initialization: ️${{ steps.init.outcome }}
+            #### Format and Style:
+            \`\`\`
+            ${process.env.FMT_OUT}
+            \`\`\`
+            #### Validation: ${{ steps.validate.outcome }}
+            #### Plan: ${{ steps.plan.outcome }}
+            \`\`\`
+            ${process.env.PLAN_OUT}
+            \`\`\`
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: tfsec
+        uses: reviewdog/action-tfsec@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          fail_on_error: "false"
+          filter_mode: "nofilter" # Check all files, not just the diff
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure' || steps.fmt.outcome == 'failure'
+        run: exit 1
