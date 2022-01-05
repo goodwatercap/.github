@@ -1,4 +1,4 @@
-# TODO: document me.
+# Runs `terraform apply` after doing the required authentication and setup.
 name: "Apply"
 
 on:
