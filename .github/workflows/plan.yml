@@ -1,10 +1,11 @@
-# TODO: document me.
+# Runs basic terraform commands (fmt, validate, plan),
+# and posts the results as a comment on the PR that triggered it.
 name: "Plan"
 
 on:
   workflow_call:
     inputs:
-      tf_version:  # 0.15.5
+      tf_version:
         required: true
         type: string
       tf_plan_var:
@@ -12,15 +13,15 @@ on:
         required: false
         type: string
     secrets:
-      CI_BOT_SSH_PRIVATE_KEY:
-        required: true
-      OASIS_REGION:
-        required: true
       gcp_project_id:
         required: true
       gcp_service_account_key:
         required: true
       k8s_cluster_id:
+        required: true
+      k8s_cluster_zone:
+        required: true
+      ssh_agent_private_key:
         required: true
 
 jobs:
@@ -31,7 +32,7 @@ jobs:
 
       - uses: webfactory/ssh-agent@v0.4.1
         with:
-          ssh-private-key: ${{ secrets.CI_BOT_SSH_PRIVATE_KEY }}
+          ssh-private-key: ${{ secrets.ssh_agent_private_key }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1.2.1
@@ -48,9 +49,10 @@ jobs:
 
       - run: |-
           gcloud --quiet auth configure-docker
+
       # Get the GKE credentials, so we can plan against the cluster
       - run: |-
-          gcloud container clusters get-credentials ${{ secrets.k8s_cluster_id }} --zone ${{ secrets.OASIS_REGION }}
+          gcloud container clusters get-credentials ${{ secrets.k8s_cluster_id }} --zone ${{ secrets.k8s_cluster_zone }}
 
       - name: Terraform fmt
         id: fmt
