@@ -7,9 +7,6 @@ on:
       tf_version:  # 0.15.5
         required: true
         type: string
-      gcp_project_id:
-        required: true
-        type: string
       tf_plan_var:
         description: Any variables to pass into terraform plan.
         required: false
@@ -18,6 +15,8 @@ on:
       CI_BOT_SSH_PRIVATE_KEY:
         required: true
       OASIS_REGION:
+        required: true
+      gcp_project_id:
         required: true
       gcp_service_account_key:
         required: true
@@ -42,7 +41,7 @@ jobs:
 
       - uses: google-github-actions/auth@v0
         with:
-          project_id: ${{ inputs.gcp_project_id }}
+          project_id: ${{ secrets.gcp_project_id }}
           credentials_json: ${{ secrets.gcp_service_account_key }}
 
       - uses: google-github-actions/setup-gcloud@v0 # terraform-bot
@@ -65,7 +64,7 @@ jobs:
       - name: Terraform Init
         id: init
         run: |-
-          terraform init -backend-config="bucket=${{ inputs.gcp_project_id }}-terraform-state" -reconfigure
+          terraform init -backend-config="bucket=${{ secrets.gcp_project_id }}-terraform-state" -reconfigure
 
       - name: Terraform Validate
         id: validate
