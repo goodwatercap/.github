@@ -78,7 +78,9 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |-
-          echo "${{ inputs.tf_var_json }}" >> terraform.tfvars.json
+          cat <<- EOF >> terraform.tfvars.json
+            ${{ inputs.tf_var_json }}
+          EOF
           terraform plan -input=false -no-color -out=terraform.plan
         continue-on-error: true
 
