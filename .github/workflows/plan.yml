@@ -5,15 +5,12 @@ name: "Plan"
 on:
   workflow_call:
     inputs:
+      tf_var_json:
+        description: A JSON string to write into terraform.tfvars.json when planning.
+        required: false
+        type: string
       tf_version:
         required: true
-        type: string
-      tf_plan_var:
-        description: Any variables to pass into terraform plan.
-        required: false
-        type: string
-      tf_var_json:
-        required: false
         type: string
     secrets:
       gcp_project_id:
@@ -78,6 +75,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |-
+          # Write the input to the varfile without substitution
           cat <<- EOF >> terraform.tfvars.json
             ${{ inputs.tf_var_json }}
           EOF

@@ -4,12 +4,12 @@ name: "Apply"
 on:
   workflow_call:
     inputs:
+      tf_var_json:
+        description: A JSON string to write into terraform.tfvars.json when applying.
+        required: false
+        type: string
       tf_version:
         required: true
-        type: string
-      tf_apply_var:
-        description: Any variables to pass into terraform apply.
-        required: false
         type: string
     secrets:
       gcp_project_id:
@@ -45,8 +45,16 @@ jobs:
           terraform_version: ${{ inputs.tf_version }}
           terraform_wrapper: false
 
+      - name: Terraform Init
+        id: init
+        run: |-
+          terraform init -backend-config="bucket=${{ secrets.gcp_project_id }}-terraform-state" -reconfigure
+
       - name: Terraform Apply
         id: apply
         run: |-
-          terraform init -backend-config="bucket=${{ secrets.gcp_project_id }}-terraform-state" -reconfigure
-          terraform apply --auto-approve --input=false -var='${{ inputs.tf_apply_var }}'
+          # Write the input to the varfile without substitution
+          cat <<- EOF >> terraform.tfvars.json
+            ${{ inputs.tf_var_json }}
+          EOF
+          terraform apply --auto-approve --input=false
