@@ -86,7 +86,6 @@ jobs:
           FMT_OUT: ${{ steps.fmt.outputs.stdout }}
           PLAN_OUT: ${{ steps.show_plan.outputs.stdout }}
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const output = `#### Initialization: ️${{ steps.init.outcome }}
             #### Format and Style:
@@ -109,7 +108,6 @@ jobs:
       - name: tfsec
         uses: reviewdog/action-tfsec@master
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
           fail_on_error: "false"
           filter_mode: "nofilter" # Check all files, not just the diff
