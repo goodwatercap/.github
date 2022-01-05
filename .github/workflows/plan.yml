@@ -46,10 +46,6 @@ jobs:
           credentials_json: ${{ secrets.gcp_service_account_key }}
 
       - uses: google-github-actions/setup-gcloud@v0 # terraform-bot
-        with:
-          project_id: ${{ inputs.gcp_project_id }}
-          service_account_key: ${{ secrets.gcp_service_account_key }}
-          export_default_credentials: true
 
       - run: |-
           gcloud --quiet auth configure-docker
