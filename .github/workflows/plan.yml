@@ -10,8 +10,9 @@ on:
       gcp_project_id:
         required: true
         type: string
-      oasis_environment:
-        required: true
+      tf_plan_var:
+        description: Any variables to pass into terraform plan.
+        required: false
         type: string
     secrets:
       CI_BOT_SSH_PRIVATE_KEY:
@@ -76,7 +77,7 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -input=false -no-color -out=terraform.plan -var='oasis_environment=${{ inputs.oasis_environment }}'
+        run: terraform plan -input=false -no-color -out=terraform.plan -var='${{ inputs.tf_plan_var }}'
         continue-on-error: true
 
       - id: show_plan
