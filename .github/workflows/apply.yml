@@ -1,0 +1,52 @@
+# TODO: document me.
+name: "Apply"
+
+on:
+  workflow_call:
+    inputs:
+      tf_version:
+        required: true
+        type: string
+      tf_apply_var:
+        description: Any variables to pass into terraform apply.
+        required: false
+        type: string
+    secrets:
+      gcp_project_id:
+        required: true
+      gcp_service_account_key:
+        required: true
+      ssh_agent_private_key:
+        required: true
+
+jobs:
+  Apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: webfactory/ssh-agent@v0.4.1
+        with:
+          ssh-private-key: ${{ secrets.ssh_agent_private_key }}
+
+      - uses: google-github-actions/auth@v0
+        with:
+          project_id: ${{ secrets.gcp_project_id }}
+          credentials_json: ${{ secrets.gcp_service_account_key }}
+
+      - uses: google-github-actions/setup-gcloud@v0 # terraform-bot
+
+      - run: |-
+          gcloud --quiet auth configure-docker
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1.2.1
+        with:
+          terraform_version: ${{ inputs.tf_version }}
+          terraform_wrapper: false
+
+      - name: Terraform Apply
+        id: apply
+        run: |-
+          terraform init -backend-config="bucket=${{ secrets.gcp_project_id }}-terraform-state" -reconfigure
+          terraform apply --auto-approve --input=false -var='${{ inputs.tf_apply_var }}'
