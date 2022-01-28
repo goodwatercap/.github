@@ -46,7 +46,10 @@ jobs:
 
       # Get the GKE credentials, so we can apply against the cluster
       - name: get-credentials
-        if: ${{ secrets.k8s_cluster_id }} && ${{ secrets.k8s_cluster_zone }}
+        # Workaround to https://github.com/actions/runner/issues/520
+        env:
+          HAS_CREDENTIALS: ${{ secrets.k8s_cluster_id && secrets.k8s_cluster_zone }}
+        if: env.HAS_CREDENTIALS
         run: |-
           gcloud container clusters get-credentials ${{ secrets.k8s_cluster_id }} --zone ${{ secrets.k8s_cluster_zone }}
 
