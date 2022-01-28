@@ -46,7 +46,7 @@ jobs:
 
       # Get the GKE credentials, so we can apply against the cluster
       - name: get-credentials
-        if: secrets.k8s_cluster_id && secrets.k8s_cluster_zone
+        if: ${{ secrets.k8s_cluster_id }} && ${{ secrets.k8s_cluster_zone }}
         run: |-
           gcloud container clusters get-credentials ${{ secrets.k8s_cluster_id }} --zone ${{ secrets.k8s_cluster_zone }}
 
