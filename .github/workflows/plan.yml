@@ -19,9 +19,9 @@ on:
       gcp_service_account_key:
         required: true
       k8s_cluster_id:
-        required: true
+        required: false
       k8s_cluster_zone:
-        required: true
+        required: false
       ssh_agent_private_key:
         required: true
 
@@ -52,7 +52,12 @@ jobs:
           gcloud --quiet auth configure-docker
 
       # Get the GKE credentials, so we can plan against the cluster
-      - run: |-
+      - name: get-credentials
+        # Workaround to https://github.com/actions/runner/issues/520
+        env:
+          HAS_CREDENTIALS: ${{ secrets.k8s_cluster_id && secrets.k8s_cluster_zone }}
+        if: env.HAS_CREDENTIALS
+        run: |-
           gcloud container clusters get-credentials ${{ secrets.k8s_cluster_id }} --zone ${{ secrets.k8s_cluster_zone }}
 
       - name: Terraform fmt
