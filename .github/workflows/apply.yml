@@ -1,0 +1,61 @@
+# Runs `terraform apply` after doing the required authentication and setup.
+name: "Apply"
+
+on:
+  workflow_call:
+    inputs:
+      tf_var_json:
+        description: A JSON string to write into terraform.tfvars.json when applying.
+        required: false
+        type: string
+      tf_version:
+        description: Which version of terraform to use, eg. 1.1.2 or 0.15.5
+        required: true
+        type: string
+    secrets:
+      gcp_project_id:
+        required: true
+      gcp_service_account_key:
+        required: true
+      ssh_agent_private_key:
+        required: true
+
+jobs:
+  Apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: webfactory/ssh-agent@v0.4.1
+        with:
+          ssh-private-key: ${{ secrets.ssh_agent_private_key }}
+
+      - uses: google-github-actions/auth@v0
+        with:
+          project_id: ${{ secrets.gcp_project_id }}
+          credentials_json: ${{ secrets.gcp_service_account_key }}
+
+      - uses: google-github-actions/setup-gcloud@v0 # terraform-bot
+
+      - run: |-
+          gcloud --quiet auth configure-docker
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1.2.1
+        with:
+          terraform_version: ${{ inputs.tf_version }}
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        id: init
+        run: |-
+          terraform init -backend-config="bucket=${{ secrets.gcp_project_id }}-terraform-state" -reconfigure
+
+      - name: Terraform Apply
+        id: apply
+        run: |-
+          # Write the input to the varfile without substitution
+          cat <<- EOF >> terraform.tfvars.json
+            ${{ inputs.tf_var_json }}
+          EOF
+          terraform apply --auto-approve --input=false

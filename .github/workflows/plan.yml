@@ -1,1 +1,125 @@
-# Placeholder
+# Runs basic terraform commands (fmt, validate, plan),
+# and posts the results as a comment on the PR that triggered it.
+name: "Plan"
+
+on:
+  workflow_call:
+    inputs:
+      tf_var_json:
+        description: A JSON string to write into terraform.tfvars.json when planning.
+        required: false
+        type: string
+      tf_version:
+        description: Which version of terraform to use, eg. 1.1.2 or 0.15.5
+        required: true
+        type: string
+    secrets:
+      gcp_project_id:
+        required: true
+      gcp_service_account_key:
+        required: true
+      k8s_cluster_id:
+        required: true
+      k8s_cluster_zone:
+        required: true
+      ssh_agent_private_key:
+        required: true
+
+jobs:
+  Plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: webfactory/ssh-agent@v0.4.1
+        with:
+          ssh-private-key: ${{ secrets.ssh_agent_private_key }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1.2.1
+        with:
+          terraform_version: ${{ inputs.tf_version }}
+          terraform_wrapper: false
+
+      - uses: google-github-actions/auth@v0
+        with:
+          project_id: ${{ secrets.gcp_project_id }}
+          credentials_json: ${{ secrets.gcp_service_account_key }}
+
+      - uses: google-github-actions/setup-gcloud@v0 # terraform-bot
+
+      - run: |-
+          gcloud --quiet auth configure-docker
+
+      # Get the GKE credentials, so we can plan against the cluster
+      - run: |-
+          gcloud container clusters get-credentials ${{ secrets.k8s_cluster_id }} --zone ${{ secrets.k8s_cluster_zone }}
+
+      - name: Terraform fmt
+        id: fmt
+        run: |-
+          output=$(terraform fmt -diff -no-color)
+          output="${output//$'\n'/\%0A}"
+          if [[ -z $output ]]; then output="No formatting errors found."; fi
+          echo "::set-output name=stdout::$output"
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: |-
+          terraform init -backend-config="bucket=${{ secrets.gcp_project_id }}-terraform-state" -reconfigure
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        run: |-
+          # Write the input to the varfile without substitution
+          cat <<- EOF >> terraform.tfvars.json
+            ${{ inputs.tf_var_json }}
+          EOF
+          terraform plan -input=false -no-color -out=terraform.plan
+        continue-on-error: true
+
+      - id: show_plan
+        run: |-
+          output=$(terraform show -no-color terraform.plan)
+          output="${output//$'\n'/\%0A}"
+          echo "::set-output name=stdout::$output"
+
+      - uses: actions/github-script@v2.0.1
+        env:
+          FMT_OUT: ${{ steps.fmt.outputs.stdout }}
+          PLAN_OUT: ${{ steps.show_plan.outputs.stdout }}
+        with:
+          script: |
+            const output = `#### Initialization: ️${{ steps.init.outcome }}
+            #### Format and Style:
+            \`\`\`
+            ${process.env.FMT_OUT}
+            \`\`\`
+            #### Validation: ${{ steps.validate.outcome }}
+            #### Plan: ${{ steps.plan.outcome }}
+            \`\`\`
+            ${process.env.PLAN_OUT}
+            \`\`\`
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: tfsec
+        uses: reviewdog/action-tfsec@master
+        with:
+          reporter: github-pr-review
+          fail_on_error: "false"
+          filter_mode: "nofilter" # Check all files, not just the diff
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure' || steps.fmt.outcome == 'failure'
+        run: exit 1
