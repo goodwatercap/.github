@@ -12,15 +12,14 @@ on:
         description: Which version of terraform to use, eg. 1.1.2 or 0.15.5
         required: true
         type: string
-      tf_bucket:
-        description: The terraform backend's GCS bucket
-        required: true
-        type: string
       tf_prefix:
         description: The terraform backend's prefix within the GCS bucket
         required: false
         type: string
     secrets:
+      tf_bucket:
+        description: The terraform backend's GCS bucket
+        required: true
       gcp_project_id:
         required: true
       gcp_service_account_key:
