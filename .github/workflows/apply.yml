@@ -12,6 +12,14 @@ on:
         description: Which version of terraform to use, eg. 1.1.2 or 0.15.5
         required: true
         type: string
+      tf_bucket:
+        description: The terraform backend's GCS bucket
+        required: true
+        type: string
+      tf_prefix:
+        description: The terraform backend's prefix within the GCS bucket
+        required: false
+        type: string
     secrets:
       gcp_project_id:
         required: true
@@ -62,7 +70,7 @@ jobs:
       - name: Terraform Init
         id: init
         run: |-
-          terraform init -backend-config="bucket=${{ secrets.gcp_project_id }}-terraform-state" -reconfigure
+          terraform init -backend-config="bucket=${{ inputs.tf_bucket }}" -backend-config="prefix=${{ inputs.tf_prefix }}" -reconfigure
 
       - name: Terraform Apply
         id: apply
