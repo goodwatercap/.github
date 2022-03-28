@@ -79,7 +79,7 @@ jobs:
       - name: Terraform Init
         id: init
         run: |-
-          terraform init -backend-config="bucket=${{ inputs.tf_bucket }}" -backend-config="prefix=${{ inputs.tf_prefix }}" -reconfigure
+          terraform init -backend-config="bucket=${{ secrets.tf_bucket }}" -backend-config="prefix=${{ inputs.tf_prefix }}" -reconfigure
 
       - name: Terraform Validate
         id: validate
