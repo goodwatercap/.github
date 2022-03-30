@@ -108,6 +108,7 @@ jobs:
           output=$(terraform show -no-color terraform.plan)
           output="${output//$'\n'/\%0A}"
           echo "::set-output name=stdout::$output"
+        working-directory: ${{ inputs.tf_working_directory }}
 
       - uses: actions/github-script@v2.0.1
         env:
