@@ -12,7 +12,18 @@ on:
         description: Which version of terraform to use, eg. 1.1.2 or 0.15.5
         required: true
         type: string
+      tf_prefix:
+        description: The terraform backend's prefix within the GCS bucket
+        required: false
+        type: string
+      tf_working_directory:
+        description: The directory from which to run terraform commands
+        required: false
+        type: string
     secrets:
+      tf_bucket:
+        description: The terraform backend's GCS bucket
+        required: true
       gcp_project_id:
         required: true
       gcp_service_account_key:
@@ -62,7 +73,8 @@ jobs:
       - name: Terraform Init
         id: init
         run: |-
-          terraform init -backend-config="bucket=${{ secrets.gcp_project_id }}-terraform-state" -reconfigure
+          terraform init -backend-config="bucket=${{ secrets.tf_bucket }}" -backend-config="prefix=${{ inputs.tf_prefix }}" -reconfigure
+        working-directory: ${{ inputs.tf_working_directory }}
 
       - name: Terraform Apply
         id: apply
@@ -72,3 +84,4 @@ jobs:
             ${{ inputs.tf_var_json }}
           EOF
           terraform apply --auto-approve --input=false
+        working-directory: ${{ inputs.tf_working_directory }}

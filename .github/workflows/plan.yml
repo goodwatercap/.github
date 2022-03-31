@@ -13,7 +13,18 @@ on:
         description: Which version of terraform to use, eg. 1.1.2 or 0.15.5
         required: true
         type: string
+      tf_prefix:
+        description: The terraform backend's prefix within the GCS bucket
+        required: false
+        type: string
+      tf_working_directory:
+        description: The directory from which to run terraform commands
+        required: false
+        type: string
     secrets:
+      tf_bucket:
+        description: The terraform backend's GCS bucket
+        required: true
       gcp_project_id:
         required: true
       gcp_service_account_key:
@@ -68,15 +79,18 @@ jobs:
           if [[ -z $output ]]; then output="No formatting errors found."; fi
           echo "::set-output name=stdout::$output"
         continue-on-error: true
+        working-directory: ${{ inputs.tf_working_directory }}
 
       - name: Terraform Init
         id: init
         run: |-
-          terraform init -backend-config="bucket=${{ secrets.gcp_project_id }}-terraform-state" -reconfigure
+          terraform init -backend-config="bucket=${{ secrets.tf_bucket }}" -backend-config="prefix=${{ inputs.tf_prefix }}" -reconfigure
+        working-directory: ${{ inputs.tf_working_directory }}
 
       - name: Terraform Validate
         id: validate
         run: terraform validate -no-color
+        working-directory: ${{ inputs.tf_working_directory }}
 
       - name: Terraform Plan
         id: plan
@@ -87,12 +101,14 @@ jobs:
           EOF
           terraform plan -input=false -no-color -out=terraform.plan
         continue-on-error: true
+        working-directory: ${{ inputs.tf_working_directory }}
 
       - id: show_plan
         run: |-
           output=$(terraform show -no-color terraform.plan)
           output="${output//$'\n'/\%0A}"
           echo "::set-output name=stdout::$output"
+        working-directory: ${{ inputs.tf_working_directory }}
 
       - uses: actions/github-script@v2.0.1
         env:
