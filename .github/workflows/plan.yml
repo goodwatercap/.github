@@ -5,6 +5,11 @@ name: "Plan"
 on:
   workflow_call:
     inputs:
+      ref:
+        description: Override of GITHUB_REF environment variable (ie, what branch to run tf against)
+        required: false
+        type: string
+        default: ${GITHUB_REF}
       tf_var_json:
         description: A JSON string to write into terraform.tfvars.json when planning.
         required: false
