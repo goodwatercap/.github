@@ -34,10 +34,16 @@ on:
         required: false
       ssh_agent_private_key:
         required: true
+    outputs:
+      apply_output:
+        description: The output from running `terraform apply`
+        value: ${{ jobs.Apply.outputs.apply_output }}
 
 jobs:
   Apply:
     runs-on: ubuntu-latest
+    outputs:
+      apply_output: ${{ steps.apply.stdout }}
     steps:
       - uses: actions/checkout@v2
 

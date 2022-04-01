@@ -35,10 +35,16 @@ on:
         required: false
       ssh_agent_private_key:
         required: true
+    outputs:
+      plan_output:
+        description: The output from running `terraform plan`
+        value: ${{ jobs.Plan.outputs.plan_output }}
 
 jobs:
   Plan:
     runs-on: ubuntu-latest
+    outputs:
+      plan_output: ${{ steps.show_plan.outputs.stdout }}
     steps:
       - uses: actions/checkout@v2
 
