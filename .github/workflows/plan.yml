@@ -52,6 +52,8 @@ jobs:
       plan_output: ${{ steps.show_plan.outputs.stdout }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref:  ${{ inputs.ref }}
 
       - uses: webfactory/ssh-agent@v0.4.1
         with:
