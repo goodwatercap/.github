@@ -48,7 +48,7 @@ jobs:
   Apply:
     runs-on: ubuntu-latest
     outputs:
-      apply_output: ${{ steps.apply.stdout }}
+      apply_output: ${{ steps.apply.outputs.stdout }}
     steps:
       - uses: actions/checkout@v2
         with:
