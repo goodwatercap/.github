@@ -39,16 +39,10 @@ on:
         required: false
       ssh_agent_private_key:
         required: true
-    outputs:
-      apply_output:
-        description: The output from running `terraform apply`
-        value: ${{ jobs.Apply.outputs.apply_output }}
 
 jobs:
   Apply:
     runs-on: ubuntu-latest
-    outputs:
-      apply_output: ${{ steps.apply.outputs.stdout }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -99,4 +93,29 @@ jobs:
           output=$(terraform apply --auto-approve --input=false)
           output="${output//$'\n'/\%0A}"
           echo "::set-output name=stdout::$output"
+        continue-on-error: true
         working-directory: ${{ inputs.tf_working_directory }}
+
+      - uses: actions/github-script@v2.0.1
+        if: ${{ github.event.issue.pull_request }}
+        env:
+          FMT_OUT: ${{ steps.fmt.outputs.stdout }}
+          APPLY_OUT: ${{ steps.apply.outputs.stdout }}
+        with:
+          script: |
+            const output = `#### Initialization: ️${{ steps.init.outcome }}
+            #### Apply: ${{ steps.apply.outcome }}
+            \`\`\`
+            ${process.env.APPLY_OUT}
+            \`\`\`
+            *Requester: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Terraform Apply Status
+        if: steps.apply.outcome == 'failure'
+        run: exit 1
