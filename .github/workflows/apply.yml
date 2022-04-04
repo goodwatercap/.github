@@ -4,6 +4,11 @@ name: "Apply"
 on:
   workflow_call:
     inputs:
+      github_ref:
+        description: Override of GITHUB_REF environment variable (ie, what branch to run tf against)
+        required: false
+        type: string
+        default: ${GITHUB_REF}
       tf_var_json:
         description: A JSON string to write into terraform.tfvars.json when applying.
         required: false
@@ -46,6 +51,8 @@ jobs:
       apply_output: ${{ steps.apply.stdout }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref:  ${{ inputs.github_ref }}
 
       - uses: webfactory/ssh-agent@v0.4.1
         with:
