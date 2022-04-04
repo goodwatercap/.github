@@ -90,7 +90,7 @@ jobs:
           cat <<- EOF >> terraform.tfvars.json
             ${{ inputs.tf_var_json }}
           EOF
-          output=$(terraform apply --auto-approve --input=false)
+          output=$(terraform apply --auto-approve --input=false -no-color)
           output="${output//$'\n'/\%0A}"
           echo "::set-output name=stdout::$output"
         continue-on-error: true
