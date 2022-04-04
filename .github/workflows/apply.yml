@@ -96,5 +96,7 @@ jobs:
           cat <<- EOF >> terraform.tfvars.json
             ${{ inputs.tf_var_json }}
           EOF
-          terraform apply --auto-approve --input=false
+          output=$(terraform apply --auto-approve --input=false)
+          output="${output//$'\n'/\%0A}"
+          echo "::set-output name=stdout::$output"
         working-directory: ${{ inputs.tf_working_directory }}
