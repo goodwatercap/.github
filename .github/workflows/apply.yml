@@ -91,8 +91,9 @@ jobs:
             ${{ inputs.tf_var_json }}
           EOF
           output=$(terraform apply --auto-approve --input=false -no-color)
-          output="${output//$'\n'/\%0A}"
           echo $output
+          output="${output/Note: Objects have changed*Terraform will perform the following actions/Terraform will perform the following actions}"
+          output="${output//$'\n'/\%0A}"
           echo "::set-output name=stdout::$output"
         continue-on-error: true
         working-directory: ${{ inputs.tf_working_directory }}

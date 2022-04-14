@@ -113,6 +113,7 @@ jobs:
       - id: show_plan
         run: |-
           output=$(terraform show -no-color terraform.plan)
+          output="${output/Note: Objects have changed*Terraform will perform the following actions/Terraform will perform the following actions}"
           output="${output//$'\n'/\%0A}"
           echo "::set-output name=stdout::$output"
         working-directory: ${{ inputs.tf_working_directory }}
