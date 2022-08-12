@@ -1,0 +1,211 @@
+# When a comment such as `/apply dev` is created, apply that PR to the dev environment.
+# Available commands: `/plan [dev|stage|prod]`, `/apply [dev|stage]`.
+# Applying to prod is done only by merging into main.
+
+name: "TF Commands"
+
+# NOTE: `on: issue_comment` means that these actions are *only executed from the main branch*:
+# see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  find_plan_dev_comment:
+    if: ${{ contains(github.event.comment.body, '/plan dev') }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+      GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v5
+        with:
+          script: |
+            const output = `Starting \`terraform plan\` against dev...`
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+  run_plan_dev:
+    needs: find_plan_dev_comment
+    uses: goodwatercap/.github/.github/workflows/plan.yml@main
+    with:
+      github_ref: 'refs/pull/${{ github.event.issue.number }}/merge'
+      tf_var_json: '{"oasis_environment": "dev"}'
+      tf_version: 0.15.5
+      tf_prefix: 'oasis-data-pipeline/dev'
+      tf_working_directory: 'tf/'
+    secrets:
+      tf_bucket: 'goodwater-tfstate'
+      gcp_project_id: ${{ secrets.OASIS_DEV_GCP_PROJECT_ID }}
+      gcp_service_account_key: ${{ secrets.OASIS_DEV_TERRAFORM_BOT_SA_KEY }}
+      k8s_cluster_id: ${{ secrets.DEV_COMPOSER_GKE }}
+      k8s_cluster_zone: ${{ secrets.OASIS_REGION }}
+      ssh_agent_private_key: ${{ secrets.CI_BOT_SSH_PRIVATE_KEY }}
+
+  find_apply_dev_comment:
+    if: ${{ contains(github.event.comment.body, '/apply dev') }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+      GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v5
+        with:
+          script: |
+            const output = `Starting \`terraform apply\` against dev...`
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+  run_apply_dev:
+    needs: find_apply_dev_comment
+    uses: goodwatercap/.github/.github/workflows/apply.yml@main
+    with:
+      github_ref: 'refs/pull/${{ github.event.issue.number }}/merge'
+      tf_var_json: '{"oasis_environment": "dev"}'
+      tf_version: 0.15.5
+      tf_prefix: 'oasis-data-pipeline/dev'
+      tf_working_directory: 'tf/'
+    secrets:
+      tf_bucket: 'goodwater-tfstate'
+      gcp_project_id: ${{ secrets.OASIS_DEV_GCP_PROJECT_ID }}
+      gcp_service_account_key: ${{ secrets.OASIS_DEV_TERRAFORM_BOT_SA_KEY }}
+      k8s_cluster_id: ${{ secrets.DEV_COMPOSER_GKE }}
+      k8s_cluster_zone: ${{ secrets.OASIS_REGION }}
+      ssh_agent_private_key: ${{ secrets.CI_BOT_SSH_PRIVATE_KEY }}
+
+  find_plan_stage_comment:
+    if: ${{ contains(github.event.comment.body, '/plan stage') }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+      GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v5
+        with:
+          script: |
+            const output = `Starting \`terraform plan\` against stage...`
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+  run_plan_stage:
+    needs: find_plan_stage_comment
+    uses: goodwatercap/.github/.github/workflows/plan.yml@main
+    with:
+      github_ref: 'refs/pull/${{ github.event.issue.number }}/merge'
+      tf_var_json: '{"oasis_environment": "stage"}'
+      tf_version: 0.15.5
+      tf_prefix: 'oasis-data-pipeline/stage'
+      tf_working_directory: 'tf/'
+    secrets:
+      tf_bucket: 'goodwater-tfstate'
+      gcp_project_id: ${{ secrets.OASIS_STAGE_GCP_PROJECT_ID }}
+      gcp_service_account_key: ${{ secrets.OASIS_STAGE_TERRAFORM_BOT_SA_KEY }}
+      k8s_cluster_id: ${{ secrets.STAGE_COMPOSER_GKE }}
+      k8s_cluster_zone: ${{ secrets.OASIS_REGION }}
+      ssh_agent_private_key: ${{ secrets.CI_BOT_SSH_PRIVATE_KEY }}
+
+  find_apply_stage_comment:
+    if: ${{ contains(github.event.comment.body, '/apply stage') }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+      GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v5
+        with:
+          script: |
+            const output = `Starting \`terraform apply\` against stage...`
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+  run_apply_stage:
+    needs: find_apply_stage_comment
+    uses: goodwatercap/.github/.github/workflows/apply.yml@main
+    with:
+      github_ref: 'refs/pull/${{ github.event.issue.number }}/merge'
+      tf_var_json: '{"oasis_environment": "stage"}'
+      tf_version: 0.15.5
+      tf_prefix: 'oasis-data-pipeline/stage'
+      tf_working_directory: 'tf/'
+    secrets:
+      tf_bucket: 'goodwater-tfstate'
+      gcp_project_id: ${{ secrets.OASIS_STAGE_GCP_PROJECT_ID }}
+      gcp_service_account_key: ${{ secrets.OASIS_STAGE_TERRAFORM_BOT_SA_KEY }}
+      k8s_cluster_id: ${{ secrets.STAGE_COMPOSER_GKE }}
+      k8s_cluster_zone: ${{ secrets.OASIS_REGION }}
+      ssh_agent_private_key: ${{ secrets.CI_BOT_SSH_PRIVATE_KEY }}
+
+  find_plan_prod_comment:
+    if: ${{ contains(github.event.comment.body, '/plan prod') }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+      GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v5
+        with:
+          script: |
+            const output = `Starting \`terraform plan\` against prod...`
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+  run_plan_prod:
+    needs: find_plan_prod_comment
+    uses: goodwatercap/.github/.github/workflows/plan.yml@main
+    with:
+      github_ref: 'refs/pull/${{ github.event.issue.number }}/merge'
+      tf_var_json: '{"oasis_environment": "prod"}'
+      tf_version: 0.15.5
+      tf_prefix: 'oasis-data-pipeline/prod'
+      tf_working_directory: 'tf/'
+    secrets:
+      tf_bucket: 'goodwater-tfstate'
+      gcp_project_id: ${{ secrets.OASIS_PROD_GCP_PROJECT_ID }}
+      gcp_service_account_key: ${{ secrets.OASIS_PROD_TERRAFORM_BOT_SA_KEY }}
+      k8s_cluster_id: ${{ secrets.PROD_COMPOSER_GKE }}
+      k8s_cluster_zone: ${{ secrets.OASIS_REGION }}
+      ssh_agent_private_key: ${{ secrets.CI_BOT_SSH_PRIVATE_KEY }}
+
+  post_failure:
+    needs: [run_plan_dev, run_apply_dev, run_plan_stage, run_apply_stage, run_plan_prod]
+    if: ${{ needs.run_plan_dev.result == 'failure' || needs.run_apply_dev.result == 'failure'
+      || needs.run_apply_dev.result == 'failure' || needs.run_apply_stage.result == 'failure'
+      || needs.run_plan_prod.result == 'failure' }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+      GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v5
+        env:
+          APPLY_STATUS: ${{ needs.run_apply.status }}
+        with:
+          script: |
+            const output = `Terraform command failed. Check Action logs for the cause.`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+

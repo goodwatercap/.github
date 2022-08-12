@@ -1,0 +1,62 @@
+# Deploy PRs against main to dev
+name: "Deploy PRs to dev"
+
+on:
+  pull_request:
+    types: [opened, reopened, closed, synchronize, ready_for_review, converted_to_draft]
+    branches:
+      - main
+    paths:
+      - 'dags/**'
+
+jobs:
+  # Grab all the PRs, merge into main and deploy to dev
+  Rollout:
+    if: ${{ github.event.pull_request.draft == false
+        || github.event.action == 'converted_to_draft' }}
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+      GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
+    steps:
+      - id: setup
+        name: Setup Project Data
+        run: |-
+
+          echo "dev_gcp_buck_name=us-central1-dev-composer-2-192968ce-bucket" >> $GITHUB_ENV
+          echo "dev_gcp_service_account_key<<EOT" >> $GITHUB_ENV
+          cat <<- EOT >> $GITHUB_ENV
+            ${{ secrets.OASIS_DEV_TERRAFORM_BOT_SA_KEY }}
+          EOT
+          echo "EOT" >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: User config
+        run: |-
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+      - name: Rollup open PRs
+        run: |-
+          chmod +x "${GITHUB_WORKSPACE}/.github/workflows/merge_prs.sh"
+          "${GITHUB_WORKSPACE}/.github/workflows/merge_prs.sh"
+
+      - name: Add Credentials (Dev)
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          service_account_key: ${{ env.dev_gcp_service_account_key }}
+          export_default_credentials: true
+
+      - name: Remove Top level files (Dev)
+        run: gsutil -m rm -rf gs://${{ env.dev_gcp_buck_name }}/dags/*
+
+      - name: Upload Files (Dev)
+        uses: google-github-actions/upload-cloud-storage@v0
+        with:
+          path: dags
+          destination: ${{ env.dev_gcp_buck_name }}
+          gzip: false

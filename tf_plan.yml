@@ -1,0 +1,27 @@
+# Pull requests will automatically plan against all three Oasis environments.
+# Use the comments defined in tf_comment_commands.yml to manually plan against dev/stage.
+# TODO: delete me entirely?
+name: "Plan"
+
+on:
+  pull_request:
+    branches:
+      - not_actually_main
+    paths:
+      - '**.tf'
+
+
+jobs:
+  plan_prod:
+    uses: goodwatercap/.github/.github/workflows/plan.yml@main
+    with:
+      tf_var_json: '{"oasis_environment": "prod"}'
+      tf_version: 0.15.5
+      tf_prefix: 'oasis-data-pipeline/prod'
+      tf_working_directory: 'tf/'
+    secrets:
+      tf_bucket: 'goodwater-tfstate'
+      gcp_project_id: ${{ secrets.OASIS_PROD_GCP_PROJECT_ID }}
+      gcp_service_account_key: ${{ secrets.OASIS_PROD_TERRAFORM_BOT_SA_KEY}}
+      ssh_agent_private_key: ${{ secrets.CI_BOT_SSH_PRIVATE_KEY }}
+

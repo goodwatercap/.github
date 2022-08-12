@@ -1,0 +1,25 @@
+# Pushes to the main branch will trigger an automatic terraform apply against prod.
+name: "Apply"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.tf'
+
+jobs:
+  apply_prod:
+    uses: goodwatercap/.github/.github/workflows/apply.yml@main
+    with:
+      tf_var_json: '{"oasis_environment": "prod"}'
+      tf_version: 0.15.5
+      tf_prefix: 'oasis-data-pipeline/prod'
+      tf_working_directory: 'tf/'
+    secrets:
+      tf_bucket: 'goodwater-tfstate'
+      gcp_project_id: ${{ secrets.OASIS_PROD_GCP_PROJECT_ID }}
+      gcp_service_account_key: ${{ secrets.OASIS_PROD_TERRAFORM_BOT_SA_KEY }}
+      k8s_cluster_id: ${{ secrets.PROD_COMPOSER_GKE }}
+      k8s_cluster_zone: ${{ secrets.OASIS_REGION }}
+      ssh_agent_private_key: ${{ secrets.CI_BOT_SSH_PRIVATE_KEY }}
