@@ -21,7 +21,7 @@ jobs:
       - uses: actions/github-script@v5
         with:
           script: |
-            const output = `Starting \`terraform plan\` against dev...`
+            const output = `Starting \`terraform plan\` against dev and rolling up open PRs...`
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -31,20 +31,37 @@ jobs:
 
   run_plan_dev:
     needs: find_plan_dev_comment
-    uses: nikhname/.github/.github/workflows/plan.yml@main
-    with:
-      github_ref: 'refs/pull/${{ github.event.issue.number }}/merge'
-      tf_var_json: '{"oasis_environment": "dev"}'
-      tf_version: 0.15.5
-      tf_prefix: 'oasis-data-pipeline/dev'
-      tf_working_directory: 'tf/'
-    secrets:
-      tf_bucket: 'goodwater-tfstate'
-      gcp_project_id: ${{ secrets.OASIS_DEV_GCP_PROJECT_ID }}
-      gcp_service_account_key: ${{ secrets.OASIS_DEV_TERRAFORM_BOT_SA_KEY }}
-      k8s_cluster_id: ${{ secrets.DEV_COMPOSER_GKE }}
-      k8s_cluster_zone: ${{ secrets.OASIS_REGION }}
-      ssh_agent_private_key: ${{ secrets.CI_BOT_SSH_PRIVATE_KEY }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+          uses: actions/checkout@v2
+          with:
+            fetch-depth: 0
+
+      - name: User config
+        run: |-
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+      - name: Rollup open PRs
+        run: |-
+          chmod +x "${GITHUB_WORKSPACE}/.github/workflows/merge_prs.sh"
+          "${GITHUB_WORKSPACE}/.github/workflows/merge_prs.sh"
+
+      - uses: nikhname/.github/.github/workflows/plan.yml@main
+        with:
+          github_ref: 'refs/pull/${{ github.event.issue.number }}/merge'
+          tf_var_json: '{"oasis_environment": "dev"}'
+          tf_version: 0.15.5
+          tf_prefix: 'oasis-data-pipeline/dev'
+          tf_working_directory: 'tf/'
+        secrets:
+          tf_bucket: 'goodwater-tfstate'
+          gcp_project_id: ${{ secrets.OASIS_DEV_GCP_PROJECT_ID }}
+          gcp_service_account_key: ${{ secrets.OASIS_DEV_TERRAFORM_BOT_SA_KEY }}
+          k8s_cluster_id: ${{ secrets.DEV_COMPOSER_GKE }}
+          k8s_cluster_zone: ${{ secrets.OASIS_REGION }}
+          ssh_agent_private_key: ${{ secrets.CI_BOT_SSH_PRIVATE_KEY }}
 
   find_apply_dev_comment:
     if: ${{ contains(github.event.comment.body, '/apply dev') }}
