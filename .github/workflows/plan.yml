@@ -10,16 +10,6 @@ on:
         required: false
         type: string
         default: ''
-      github_token:
-        description: GITHUB_TOKEN environment variable to run merge_prs script
-        required: false
-        type: string
-        default: ''
-      github_username:
-        description: GITHUB_USERNAME environment variable to run merge_prs script
-        required: false
-        type: string
-        default: ''
       merge_prs:
         description: Flag to roll up open PRs
         required: false
@@ -42,6 +32,12 @@ on:
         required: false
         type: string
     secrets:
+      github_token:
+        description: GITHUB_TOKEN environment variable to run merge_prs script
+        required: false
+      github_username:
+        description: GITHUB_USERNAME environment variable to run merge_prs script
+        required: false
       tf_bucket:
         description: The terraform backend's GCS bucket
         required: true
@@ -59,8 +55,8 @@ on:
 jobs:
   Plan:
     env:
-      GITHUB_TOKEN: ${{ inputs.github_token }}
-      GITHUB_USERNAME: ${{ inputs.github_username }}
+      GITHUB_TOKEN: ${{ secrets.github_token }}
+      GITHUB_USERNAME: ${{ secrets.github_username }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
