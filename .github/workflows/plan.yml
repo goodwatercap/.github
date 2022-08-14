@@ -10,6 +10,16 @@ on:
         required: false
         type: string
         default: ''
+      github_token:
+        description: GITHUB_TOKEN environment variable to run merge_prs script
+        required: false
+        type: string
+        default: ''
+      github_username:
+        description: GITHUB_USERNAME environment variable to run merge_prs script
+        required: false
+        type: string
+        default: ''
       merge_prs:
         description: Flag to roll up open PRs
         required: false
@@ -48,6 +58,9 @@ on:
 
 jobs:
   Plan:
+    env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        GITHUB_USERNAME: ${{ inputs.github_username }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
