@@ -59,8 +59,8 @@ on:
 jobs:
   Plan:
     env:
-        GITHUB_TOKEN: ${{ inputs.github_token }}
-        GITHUB_USERNAME: ${{ inputs.github_username }}
+      GITHUB_TOKEN: ${{ inputs.github_token }}
+      GITHUB_USERNAME: ${{ inputs.github_username }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
