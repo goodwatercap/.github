@@ -32,10 +32,10 @@ on:
         required: false
         type: string
     secrets:
-      github_token:
+      CI_BOT_TOKEN:
         description: GITHUB_TOKEN environment variable to run merge_prs script
         required: false
-      github_username:
+      CI_BOT_USERNAME:
         description: GITHUB_USERNAME environment variable to run merge_prs script
         required: false
       tf_bucket:
@@ -55,8 +55,8 @@ on:
 jobs:
   Plan:
     env:
-      GITHUB_TOKEN: ${{ secrets.github_token }}
-      GITHUB_USERNAME: ${{ secrets.github_username }}
+      GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+      GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
