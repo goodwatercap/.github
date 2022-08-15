@@ -9,6 +9,11 @@ on:
         required: false
         type: string
         default: ''
+      merge_prs:
+        description: Flag to roll up open PRs
+        required: false
+        type: boolean
+        default: false
       tf_var_json:
         description: A JSON string to write into terraform.tfvars.json when applying.
         required: false
@@ -26,6 +31,12 @@ on:
         required: false
         type: string
     secrets:
+      CI_BOT_TOKEN:
+        description: GITHUB_TOKEN environment variable to run merge_prs script
+        required: false
+      CI_BOT_USERNAME:
+        description: GITHUB_USERNAME environment variable to run merge_prs script
+        required: false
       tf_bucket:
         description: The terraform backend's GCS bucket
         required: true
@@ -42,11 +53,27 @@ on:
 
 jobs:
   Apply:
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+      GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
           ref:  ${{ inputs.github_ref }}
+          fetch-depth: 0
+
+      - name: User config
+        if: ${{ inputs.merge_prs }}
+        run: |-
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+      - name: Rollup open PRs
+        if: ${{ inputs.merge_prs }}
+        run: |-
+          chmod +x "${GITHUB_WORKSPACE}/.github/workflows/merge_prs.sh"
+          "${GITHUB_WORKSPACE}/.github/workflows/merge_prs.sh"
 
       - uses: webfactory/ssh-agent@v0.4.1
         with:
