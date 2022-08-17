@@ -1,0 +1,63 @@
+name: "Build and Push Image"
+
+on:
+  workflow_call:
+    inputs:
+      dockerfile:
+        description: Name of the dockerfile to build and push
+        required: True
+        type: string
+    secrets:
+      repository:
+        description: Name of the repo within Container Registry to push into
+        required: True
+      gcp_project_id:
+        required: true
+      gcp_service_account_key:
+        required: true
+      k8s_cluster_id:
+        required: false
+      k8s_cluster_zone:
+        required: false
+      ssh_agent_private_key:
+        required: true
+
+jobs:
+  Push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: webfactory/ssh-agent@v0.4.1
+        with:
+          ssh-private-key: ${{ secrets.ssh_agent_private_key }}
+
+      - uses: google-github-actions/auth@v0
+        with:
+          project_id: ${{ secrets.gcp_project_id }}
+          credentials_json: ${{ secrets.gcp_service_account_key }}
+
+      - uses: google-github-actions/setup-gcloud@v0 # terraform-bot
+
+      - run: |-
+          gcloud --quiet auth configure-docker
+
+      # Get the GKE credentials, so we can apply against the cluster
+      - name: get-credentials
+        # Workaround to https://github.com/actions/runner/issues/520
+        env:
+          HAS_CREDENTIALS: ${{ secrets.k8s_cluster_id && secrets.k8s_cluster_zone }}
+        if: env.HAS_CREDENTIALS
+        run: |-
+          gcloud container clusters get-credentials ${{ secrets.k8s_cluster_id }} --zone ${{ secrets.k8s_cluster_zone }}
+
+
+      - name: Build and push image
+        uses: docker/build-push-action@v1
+        with:
+          dockerfile: ${{ inputs.dockerfile }}
+          username: _json_key
+          password: ${{ secrets.gcp_service_account_key }}
+          registry: gcr.io
+          repository: ${{ secrets.repository }}
+          tags: ${{ github.sha }}
