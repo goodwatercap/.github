@@ -121,7 +121,7 @@ jobs:
           EOF
           echo "resulting file:"
           cat terraform.tfvars.json
-          terraform apply --auto-approve --input=false -no-color | tee tf_output.txt
+          terraform apply --auto-approve --input=false -no-color 2>&1 | tee tf_output.txt
           output=$(cat tf_output.txt)
           output="${output/Note: Objects have changed*Terraform will perform the following actions/Terraform will perform the following actions}"
           output="${output//$'\n'/\%0A}"
