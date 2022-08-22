@@ -122,15 +122,18 @@ jobs:
           echo "resulting file:"
           cat terraform.tfvars.json
           terraform apply --auto-approve --input=false -no-color 2>&1 | tee tf_output.txt
+          # Use PIPESTATUS to capture errors in terraform apply:
+          # See https://linux.samba.narkive.com/Oc6yBphD/clug-tee-eats-the-return-code-of-the-previous-entry-in-the-pipeline#post4
+          tf_status=${PIPESTATUS[0]}
           output=$(cat tf_output.txt)
           output="${output/Note: Objects have changed*Terraform will perform the following actions/Terraform will perform the following actions}"
           output="${output//$'\n'/\%0A}"
           echo "::set-output name=stdout::$output"
-        continue-on-error: true
+          exit $tf_status
         working-directory: ${{ inputs.tf_working_directory }}
 
       - uses: actions/github-script@v2.0.1
-        if: ${{ github.event.issue.pull_request }}
+        if: github.event.issue.pull_request && (success() || failure())
         env:
           FMT_OUT: ${{ steps.fmt.outputs.stdout }}
           APPLY_OUT: ${{ steps.apply.outputs.stdout }}
@@ -149,6 +152,3 @@ jobs:
               body: output
             })
 
-      - name: Terraform Apply Status
-        if: steps.apply.outcome == 'failure'
-        run: exit 1
