@@ -118,8 +118,8 @@ jobs:
           cat <<- EOF >> terraform.tfvars.json
             ${{ inputs.tf_var_json }}
           EOF
-          output=$(terraform apply --auto-approve --input=false -no-color)
-          echo $output
+          terraform apply --auto-approve --input=false -no-color | tee tf_output.txt
+          output=$(cat tf_output.txt)
           output="${output/Note: Objects have changed*Terraform will perform the following actions/Terraform will perform the following actions}"
           output="${output//$'\n'/\%0A}"
           echo "::set-output name=stdout::$output"
