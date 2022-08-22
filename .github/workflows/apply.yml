@@ -113,6 +113,7 @@ jobs:
       - name: Terraform Apply
         id: apply
         run: |-
+          echo ${{ inputs.tf_var_json }}
           # Write the input to the varfile without substitution
           cat <<- EOF >> terraform.tfvars.json
             ${{ inputs.tf_var_json }}
