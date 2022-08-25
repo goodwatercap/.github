@@ -160,22 +160,22 @@ jobs:
           cat <<- EOF >> terraform.tfvars.json
             ${{ inputs.tf_var_json }}
           EOF
-          terraform plan -input=false -no-color -out=terraform.plan
-        continue-on-error: true
-        working-directory: ${{ inputs.tf_working_directory }}
-
-      - id: show_plan
-        run: |-
-          output=$(terraform show -no-color terraform.plan)
+          terraform plan -input=false -no-color -out=terraform.plan | tee plan_output.txt
+          # Use PIPESTATUS to capture errors in terraform apply:
+          # See https://linux.samba.narkive.com/Oc6yBphD/clug-tee-eats-the-return-code-of-the-previous-entry-in-the-pipeline#post4
+          tf_status=${PIPESTATUS[0]}
+          output=$(cat plan_output.txt)
           output="${output/Note: Objects have changed*Terraform will perform the following actions/Terraform will perform the following actions}"
           output="${output//$'\n'/\%0A}"
           echo "::set-output name=stdout::$output"
+          exit $tf_status
         working-directory: ${{ inputs.tf_working_directory }}
 
       - uses: actions/github-script@v2.0.1
+        if: github.event.issue.pull_request && (success() || failure())
         env:
           FMT_OUT: ${{ steps.fmt.outputs.stdout }}
-          PLAN_OUT: ${{ steps.show_plan.outputs.stdout }}
+          PLAN_OUT: ${{ steps.plan.outputs.stdout }}
         with:
           script: |
             const output = `#### Initialization: ️${{ steps.init.outcome }}
@@ -197,12 +197,9 @@ jobs:
             })
 
       - name: tfsec
+        if: success() || failure()
         uses: reviewdog/action-tfsec@master
         with:
           reporter: github-pr-review
           fail_on_error: "false"
           filter_mode: "nofilter" # Check all files, not just the diff
-
-      - name: Terraform Plan Status
-        if: steps.plan.outcome == 'failure' || steps.fmt.outcome == 'failure'
-        run: exit 1
