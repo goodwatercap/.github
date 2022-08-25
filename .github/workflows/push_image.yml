@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       merge_prs:
-        description: Flag to roll up open PRs
+        description: Flag to roll up all open PRs
         required: false
         type: boolean
         default: false
@@ -18,9 +18,12 @@ on:
         type: boolean
         default: false
     secrets:
-      repository:
-        description: Name of the repo within Container Registry to push into
-        required: true
+      CI_BOT_TOKEN:
+        description: GITHUB_TOKEN environment variable to run merge_prs script
+        required: false
+      CI_BOT_USERNAME:
+        description: GITHUB_USERNAME environment variable to run merge_prs script
+        required: false
       gcp_project_id:
         required: true
       gcp_service_account_key:
@@ -29,6 +32,9 @@ on:
         required: false
       k8s_cluster_zone:
         required: false
+      repository:
+        description: Name of the repo within Container Registry to push into
+        required: true
       ssh_agent_private_key:
         required: true
 

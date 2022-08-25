@@ -11,7 +11,12 @@ on:
         type: string
         default: ''
       merge_prs:
-        description: Flag to roll up open PRs
+        description: Flag to roll up all open PRs
+        required: false
+        type: boolean
+        default: false
+      merge_stage_prs:
+        description: Flag to roll up open PRs with a "stage" label
         required: false
         type: boolean
         default: false
@@ -65,7 +70,7 @@ jobs:
           fetch-depth: 0
 
       - name: User config
-        if: ${{ inputs.merge_prs }}
+        if: ${{ inputs.merge_prs || inputs.merge_stage_prs }}
         run: |-
           git config user.name github-actions
           git config user.email github-actions@github.com
@@ -73,8 +78,30 @@ jobs:
       - name: Rollup open PRs
         if: ${{ inputs.merge_prs }}
         run: |-
-          chmod +x "${GITHUB_WORKSPACE}/.github/workflows/merge_prs.sh"
-          "${GITHUB_WORKSPACE}/.github/workflows/merge_prs.sh"
+          git checkout origin/main
+          echo "Open PRs to deploy:"
+          echo "-----"
+          gh pr list --draft=false --base=main --limit=100 --json number,headRefName,author,mergeable \
+            -t "{{ range . }}{{ .number }} {{ .headRefName }} {{ .author.login }} {{ .mergeable }}
+          {{end}}" | sort -n
+          echo "-----"
+          gh pr list --draft=false --base=main --limit=100 --json number,headRefName,mergeable \
+            -t "{{ range . }}{{ .number }} {{ .headRefName }} {{ .mergeable }}
+          {{end}}" | grep MERGEABLE | sort -n | cut -d ' ' -f2 | xargs -I{} -n1 git merge origin/{}
+
+      - name: Rollup open stage PRs
+        if: ${{ inputs.merge_stage_prs }}
+        run: |-
+          git checkout origin/main
+          echo "Open PRs to deploy:"
+          echo "-----"
+          gh pr list --label=stage --draft=false --base=main --limit=100 --json number,headRefName,author,mergeable \
+            -t "{{ range . }}{{ .number }} {{ .headRefName }} {{ .author.login }} {{ .mergeable }}
+          {{end}}" | sort -n
+          echo "-----"
+          gh pr list --label=stage --draft=false --base=main --limit=100 --json number,headRefName,mergeable \
+            -t "{{ range . }}{{ .number }} {{ .headRefName }} {{ .mergeable }}
+          {{end}}" | grep MERGEABLE | sort -n | cut -d ' ' -f2 | xargs -I{} -n1 git merge origin/{}
 
       - uses: webfactory/ssh-agent@v0.4.1
         with:
