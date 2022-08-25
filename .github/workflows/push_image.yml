@@ -104,7 +104,6 @@ jobs:
         run: |-
           gcloud container clusters get-credentials ${{ secrets.k8s_cluster_id }} --zone ${{ secrets.k8s_cluster_zone }}
 
-
       - name: Build and push image
         uses: docker/build-push-action@v1
         with:
