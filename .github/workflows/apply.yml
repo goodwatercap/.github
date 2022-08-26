@@ -144,14 +144,15 @@ jobs:
           cat <<- EOF >> terraform.tfvars.json
             ${{ inputs.tf_var_json }}
           EOF
-          terraform apply --auto-approve --input=false -no-color 2>&1 | tee tf_output.txt
+          terraform apply --auto-approve --input=false -no-color 2>&1 | tee apply_output.txt
           # Use PIPESTATUS to capture errors in terraform apply:
           # See https://linux.samba.narkive.com/Oc6yBphD/clug-tee-eats-the-return-code-of-the-previous-entry-in-the-pipeline#post4
           tf_status=${PIPESTATUS[0]}
-          output=$(cat tf_output.txt)
+          output=$(cat apply_output.txt)
           output="${output/Note: Objects have changed*Terraform will perform the following actions/Terraform will perform the following actions}"
           output="${output//$'\n'/\%0A}"
           echo "::set-output name=stdout::$output"
+          rm apply_output.txt
           exit $tf_status
         working-directory: ${{ inputs.tf_working_directory }}
 

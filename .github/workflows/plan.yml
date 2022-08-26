@@ -168,6 +168,7 @@ jobs:
           output="${output/Note: Objects have changed*Terraform will perform the following actions/Terraform will perform the following actions}"
           output="${output//$'\n'/\%0A}"
           echo "::set-output name=stdout::$output"
+          rm plan_output.txt
           exit $tf_status
         working-directory: ${{ inputs.tf_working_directory }}
 
