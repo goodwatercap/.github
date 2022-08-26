@@ -1,14 +1,12 @@
-# Runs `terraform apply` after doing the required authentication and setup.
-name: "Apply"
+name: "Build and Push Image"
 
 on:
   workflow_call:
     inputs:
-      github_ref:
-        description: Override of GITHUB_REF environment variable (ie, what branch to run tf against)
-        required: false
+      dockerfile:
+        description: Name of the dockerfile to build and push
+        required: true
         type: string
-        default: ''
       merge_prs:
         description: Flag to roll up all open PRs
         required: false
@@ -19,22 +17,6 @@ on:
         required: false
         type: boolean
         default: false
-      tf_var_json:
-        description: A JSON string to write into terraform.tfvars.json when applying.
-        required: false
-        type: string
-      tf_version:
-        description: Which version of terraform to use, eg. 1.1.2 or 0.15.5
-        required: true
-        type: string
-      tf_prefix:
-        description: The terraform backend's prefix within the GCS bucket
-        required: false
-        type: string
-      tf_working_directory:
-        description: The directory from which to run terraform commands
-        required: false
-        type: string
     secrets:
       CI_BOT_TOKEN:
         description: GITHUB_TOKEN environment variable to run merge_prs script
@@ -42,9 +24,6 @@ on:
       CI_BOT_USERNAME:
         description: GITHUB_USERNAME environment variable to run merge_prs script
         required: false
-      tf_bucket:
-        description: The terraform backend's GCS bucket
-        required: true
       gcp_project_id:
         required: true
       gcp_service_account_key:
@@ -53,20 +32,20 @@ on:
         required: false
       k8s_cluster_zone:
         required: false
+      repository:
+        description: Name of the repo within Container Registry to push into
+        required: true
       ssh_agent_private_key:
         required: true
 
 jobs:
-  Apply:
+  Push:
     env:
       GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
       GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref:  ${{ inputs.github_ref }}
-          fetch-depth: 0
 
       - name: User config
         if: ${{ inputs.merge_prs || inputs.merge_stage_prs }}
@@ -125,54 +104,12 @@ jobs:
         run: |-
           gcloud container clusters get-credentials ${{ secrets.k8s_cluster_id }} --zone ${{ secrets.k8s_cluster_zone }}
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v1.2.1
+      - name: Build and push image
+        uses: docker/build-push-action@v1
         with:
-          terraform_version: ${{ inputs.tf_version }}
-          terraform_wrapper: false
-
-      - name: Terraform Init
-        id: init
-        run: |-
-          terraform init -backend-config="bucket=${{ secrets.tf_bucket }}" -backend-config="prefix=${{ inputs.tf_prefix }}" -reconfigure
-        working-directory: ${{ inputs.tf_working_directory }}
-
-      - name: Terraform Apply
-        id: apply
-        run: |-
-          # Write the input to the varfile without substitution
-          cat <<- EOF >> terraform.tfvars.json
-            ${{ inputs.tf_var_json }}
-          EOF
-          terraform apply --auto-approve --input=false -no-color 2>&1 | tee apply_output.txt
-          # Use PIPESTATUS to capture errors in terraform apply:
-          # See https://linux.samba.narkive.com/Oc6yBphD/clug-tee-eats-the-return-code-of-the-previous-entry-in-the-pipeline#post4
-          tf_status=${PIPESTATUS[0]}
-          output=$(cat apply_output.txt)
-          output="${output/Note: Objects have changed*Terraform will perform the following actions/Terraform will perform the following actions}"
-          output="${output//$'\n'/\%0A}"
-          echo "::set-output name=stdout::$output"
-          rm apply_output.txt
-          exit $tf_status
-        working-directory: ${{ inputs.tf_working_directory }}
-
-      - uses: actions/github-script@v2.0.1
-        if: github.event.issue.pull_request && (success() || failure())
-        env:
-          FMT_OUT: ${{ steps.fmt.outputs.stdout }}
-          APPLY_OUT: ${{ steps.apply.outputs.stdout }}
-        with:
-          script: |
-            const output = `#### Initialization: ️${{ steps.init.outcome }}
-            #### Apply: ${{ steps.apply.outcome }}
-            \`\`\`
-            ${process.env.APPLY_OUT}
-            \`\`\`
-            *Requester: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
-
+          dockerfile: ${{ inputs.dockerfile }}
+          username: _json_key
+          password: ${{ secrets.gcp_service_account_key }}
+          registry: gcr.io
+          repository: ${{ secrets.repository }}
+          tags: ${{ github.sha }}

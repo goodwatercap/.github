@@ -11,7 +11,12 @@ on:
         type: string
         default: ''
       merge_prs:
-        description: Flag to roll up open PRs
+        description: Flag to roll up all open PRs
+        required: false
+        type: boolean
+        default: false
+      merge_stage_prs:
+        description: Flag to roll up open PRs with a "stage" label
         required: false
         type: boolean
         default: false
@@ -65,7 +70,7 @@ jobs:
           fetch-depth: 0
 
       - name: User config
-        if: ${{ inputs.merge_prs }}
+        if: ${{ inputs.merge_prs || inputs.merge_stage_prs }}
         run: |-
           git config user.name github-actions
           git config user.email github-actions@github.com
@@ -73,8 +78,30 @@ jobs:
       - name: Rollup open PRs
         if: ${{ inputs.merge_prs }}
         run: |-
-          chmod +x "${GITHUB_WORKSPACE}/.github/workflows/merge_prs.sh"
-          "${GITHUB_WORKSPACE}/.github/workflows/merge_prs.sh"
+          git checkout origin/main
+          echo "Open PRs to deploy:"
+          echo "-----"
+          gh pr list --draft=false --base=main --limit=100 --json number,headRefName,author,mergeable \
+            -t "{{ range . }}{{ .number }} {{ .headRefName }} {{ .author.login }} {{ .mergeable }}
+          {{end}}" | sort -n
+          echo "-----"
+          gh pr list --draft=false --base=main --limit=100 --json number,headRefName,mergeable \
+            -t "{{ range . }}{{ .number }} {{ .headRefName }} {{ .mergeable }}
+          {{end}}" | grep MERGEABLE | sort -n | cut -d ' ' -f2 | xargs -I{} -n1 git merge origin/{}
+
+      - name: Rollup open stage PRs
+        if: ${{ inputs.merge_stage_prs }}
+        run: |-
+          git checkout origin/main
+          echo "Open PRs to deploy:"
+          echo "-----"
+          gh pr list --label=stage --draft=false --base=main --limit=100 --json number,headRefName,author,mergeable \
+            -t "{{ range . }}{{ .number }} {{ .headRefName }} {{ .author.login }} {{ .mergeable }}
+          {{end}}" | sort -n
+          echo "-----"
+          gh pr list --label=stage --draft=false --base=main --limit=100 --json number,headRefName,mergeable \
+            -t "{{ range . }}{{ .number }} {{ .headRefName }} {{ .mergeable }}
+          {{end}}" | grep MERGEABLE | sort -n | cut -d ' ' -f2 | xargs -I{} -n1 git merge origin/{}
 
       - uses: webfactory/ssh-agent@v0.4.1
         with:
@@ -133,22 +160,23 @@ jobs:
           cat <<- EOF >> terraform.tfvars.json
             ${{ inputs.tf_var_json }}
           EOF
-          terraform plan -input=false -no-color -out=terraform.plan
-        continue-on-error: true
-        working-directory: ${{ inputs.tf_working_directory }}
-
-      - id: show_plan
-        run: |-
-          output=$(terraform show -no-color terraform.plan)
+          terraform plan -input=false -no-color -out=terraform.plan | tee plan_output.txt
+          # Use PIPESTATUS to capture errors in terraform apply:
+          # See https://linux.samba.narkive.com/Oc6yBphD/clug-tee-eats-the-return-code-of-the-previous-entry-in-the-pipeline#post4
+          tf_status=${PIPESTATUS[0]}
+          output=$(cat plan_output.txt)
           output="${output/Note: Objects have changed*Terraform will perform the following actions/Terraform will perform the following actions}"
           output="${output//$'\n'/\%0A}"
           echo "::set-output name=stdout::$output"
+          rm plan_output.txt
+          exit $tf_status
         working-directory: ${{ inputs.tf_working_directory }}
 
       - uses: actions/github-script@v2.0.1
+        if: github.event.issue.pull_request && (success() || failure())
         env:
           FMT_OUT: ${{ steps.fmt.outputs.stdout }}
-          PLAN_OUT: ${{ steps.show_plan.outputs.stdout }}
+          PLAN_OUT: ${{ steps.plan.outputs.stdout }}
         with:
           script: |
             const output = `#### Initialization: ️${{ steps.init.outcome }}
@@ -170,12 +198,9 @@ jobs:
             })
 
       - name: tfsec
+        if: success() || failure()
         uses: reviewdog/action-tfsec@master
         with:
           reporter: github-pr-review
           fail_on_error: "false"
           filter_mode: "nofilter" # Check all files, not just the diff
-
-      - name: Terraform Plan Status
-        if: steps.plan.outcome == 'failure' || steps.fmt.outcome == 'failure'
-        run: exit 1
