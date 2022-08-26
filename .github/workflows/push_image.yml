@@ -7,6 +7,11 @@ on:
         description: Name of the dockerfile to build and push
         required: true
         type: string
+      github_ref:
+        description: Override of GITHUB_REF environment variable (ie, what branch to run tf against)
+        required: false
+        type: string
+        default: ''
       merge_prs:
         description: Flag to roll up all open PRs
         required: false
@@ -46,6 +51,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref:  ${{ inputs.github_ref }}
+          fetch-depth: 0
 
       - name: User config
         if: ${{ inputs.merge_prs || inputs.merge_stage_prs }}
