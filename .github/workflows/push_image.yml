@@ -62,6 +62,7 @@ jobs:
           git config user.email github-actions@github.com
 
       - name: Rollup open PRs
+        id: rollup_dev
         if: ${{ inputs.merge_prs }}
         run: |-
           git checkout origin/main
@@ -74,8 +75,11 @@ jobs:
           gh pr list --draft=false --base=main --limit=100 --json number,headRefName,mergeable \
             -t "{{ range . }}{{ .number }} {{ .headRefName }} {{ .mergeable }}
           {{end}}" | grep MERGEABLE | sort -n | cut -d ' ' -f2 | xargs -I{} -n1 git merge origin/{}
+          output=$(git rev-parse HEAD)
+          echo "::set-output name=stdout::$output"
 
       - name: Rollup open stage PRs
+        id: rollup_stage
         if: ${{ inputs.merge_stage_prs }}
         run: |-
           git checkout origin/main
@@ -88,6 +92,8 @@ jobs:
           gh pr list --label=stage --draft=false --base=main --limit=100 --json number,headRefName,mergeable \
             -t "{{ range . }}{{ .number }} {{ .headRefName }} {{ .mergeable }}
           {{end}}" | grep MERGEABLE | sort -n | cut -d ' ' -f2 | xargs -I{} -n1 git merge origin/{}
+          output=$(git rev-parse HEAD)
+          echo "::set-output name=stdout::$output"
 
       - uses: webfactory/ssh-agent@v0.4.1
         with:
@@ -120,4 +126,4 @@ jobs:
           password: ${{ secrets.gcp_service_account_key }}
           registry: gcr.io
           repository: ${{ secrets.repository }}
-          tags: ${{ github.sha }}
+          tags: ${{ steps.rollup_stage.outputs.stdout || steps.rollup_dev.outputs.stdout || github.sha }}
