@@ -1,9 +1,14 @@
 # Runs `terraform apply` after doing the required authentication and setup.
+# Also builds and pushes a Docker container, if provided.
 name: "Apply"
 
 on:
   workflow_call:
     inputs:
+      dockerfile:
+        description: Name of a dockerfile to build and push before running Terraform.
+        required: false
+        type: string
       github_ref:
         description: Override of GITHUB_REF environment variable (ie, what branch to run tf against)
         required: false
@@ -53,6 +58,9 @@ on:
         required: false
       k8s_cluster_zone:
         required: false
+      repository:
+        description: Repository within Container Registry to push the built Docker image into.
+        required: false
       ssh_agent_private_key:
         required: true
 
@@ -89,6 +97,7 @@ jobs:
             -t "{{ range . }}{{ .number }} {{ .headRefName }} {{ .mergeable }}
           {{end}}" | grep MERGEABLE | sort -n | cut -d ' ' -f2 | xargs -I{} -n1 git merge origin/{}
           output=$(git rev-parse HEAD)
+          echo "HEAD is now at SHA: $output"
           echo "::set-output name=stdout::$output"
 
       - name: Rollup open stage PRs
@@ -106,6 +115,7 @@ jobs:
             -t "{{ range . }}{{ .number }} {{ .headRefName }} {{ .mergeable }}
           {{end}}" | grep MERGEABLE | sort -n | cut -d ' ' -f2 | xargs -I{} -n1 git merge origin/{}
           output=$(git rev-parse HEAD)
+          echo "HEAD is now at SHA: $output"
           echo "::set-output name=stdout::$output"
 
       - uses: webfactory/ssh-agent@v0.4.1
@@ -142,6 +152,17 @@ jobs:
         run: |-
           terraform init -backend-config="bucket=${{ secrets.tf_bucket }}" -backend-config="prefix=${{ inputs.tf_prefix }}" -reconfigure
         working-directory: ${{ inputs.tf_working_directory }}
+
+      - name: Build and push image
+        if: inputs.dockerfile
+        uses: docker/build-push-action@v1
+        with:
+          dockerfile: ${{ inputs.dockerfile }}
+          username: _json_key
+          password: ${{ secrets.gcp_service_account_key }}
+          registry: gcr.io
+          repository: ${{ secrets.repository }}
+          tags: ${{ steps.rollup_stage.outputs.stdout || steps.rollup_dev.outputs.stdout || github.sha }}
 
       - name: Terraform Apply
         id: apply

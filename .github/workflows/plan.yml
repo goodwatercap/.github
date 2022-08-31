@@ -90,6 +90,7 @@ jobs:
             -t "{{ range . }}{{ .number }} {{ .headRefName }} {{ .mergeable }}
           {{end}}" | grep MERGEABLE | sort -n | cut -d ' ' -f2 | xargs -I{} -n1 git merge origin/{}
           output=$(git rev-parse HEAD)
+          echo "HEAD is now at SHA: $output"
           echo "::set-output name=stdout::$output"
 
       - name: Rollup open stage PRs
@@ -107,6 +108,7 @@ jobs:
             -t "{{ range . }}{{ .number }} {{ .headRefName }} {{ .mergeable }}
           {{end}}" | grep MERGEABLE | sort -n | cut -d ' ' -f2 | xargs -I{} -n1 git merge origin/{}
           output=$(git rev-parse HEAD)
+          echo "HEAD is now at SHA: $output"
           echo "::set-output name=stdout::$output"
 
       - uses: webfactory/ssh-agent@v0.4.1
