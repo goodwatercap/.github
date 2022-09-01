@@ -1,3 +1,5 @@
+# Build and push a Docker image.
+# To build an image and use it within Terraform, prefer passing your dockerfile into apply.yml instead.
 name: "Build and Push Image"
 
 on:
