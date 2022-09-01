@@ -77,9 +77,6 @@ jobs:
           gh pr list --draft=false --base=main --limit=100 --json number,headRefName,mergeable \
             -t "{{ range . }}{{ .number }} {{ .headRefName }} {{ .mergeable }}
           {{end}}" | grep MERGEABLE | sort -n | cut -d ' ' -f2 | xargs -I{} -n1 git merge origin/{}
-          output=$(git rev-parse HEAD)
-          echo "HEAD is now at SHA: $output"
-          echo "::set-output name=stdout::$output"
 
       - name: Rollup open stage PRs
         id: rollup_stage
@@ -95,6 +92,10 @@ jobs:
           gh pr list --label=stage --draft=false --base=main --limit=100 --json number,headRefName,mergeable \
             -t "{{ range . }}{{ .number }} {{ .headRefName }} {{ .mergeable }}
           {{end}}" | grep MERGEABLE | sort -n | cut -d ' ' -f2 | xargs -I{} -n1 git merge origin/{}
+
+      - name: Get current SHA
+        id: get_sha
+        run: |-
           output=$(git rev-parse HEAD)
           echo "HEAD is now at SHA: $output"
           echo "::set-output name=stdout::$output"
@@ -130,4 +131,4 @@ jobs:
           password: ${{ secrets.gcp_service_account_key }}
           registry: gcr.io
           repository: ${{ secrets.repository }}
-          tags: ${{ steps.rollup_stage.outputs.stdout || steps.rollup_dev.outputs.stdout || github.sha }}
+          tags: ${{ steps.get_sha.outputs.stdout }}
