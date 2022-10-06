@@ -24,6 +24,11 @@ on:
         required: false
         type: boolean
         default: false
+      post_result_comment:
+        description: Whether or not to add a comment to the context's PR with the Terraform command results.
+        required: false
+        type: boolean
+        default: true
       tf_var_json:
         description: A JSON string to write into terraform.tfvars.json when applying.
         required: false
@@ -187,7 +192,7 @@ jobs:
         working-directory: ${{ inputs.tf_working_directory }}
 
       - uses: actions/github-script@v2.0.1
-        if: github.event.issue.pull_request && (success() || failure())
+        if: inputs.post_result_comment && (success() || failure())
         env:
           FMT_OUT: ${{ steps.fmt.outputs.stdout }}
           APPLY_OUT: ${{ steps.apply.outputs.stdout }}
