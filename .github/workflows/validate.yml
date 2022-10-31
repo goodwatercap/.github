@@ -29,9 +29,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: webfactory/ssh-agent@master
+      - uses: webfactory/ssh-agent@v0.4.1
         with:
-          ssh-private-key: ${{ secrets.CI_BOT_SSH_PRIVATE_KEY }}
+          ssh-private-key: ${{ secrets.ssh_agent_private_key }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1.2.1
