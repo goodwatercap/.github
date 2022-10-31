@@ -5,26 +5,26 @@ on:
   workflow_call:
     inputs:
       post_result_comment:
+        default: true
         description: Whether or not to add a comment to the context's PR with the Terraform command results.
         required: false
         type: boolean
-        default: true
       tf_version:
         description: Which version of terraform to use, eg. 1.1.2 or 0.15.5
         required: true
         type: string
       tf_working_directory:
+        default: "."
         description: The directory from which to run terraform commands
         required: false
         type: string
-        default: "."
+    secrets:
+      ssh_agent_private_key:
+        required: true
 
 jobs:
   Terraform:
     name: Terraform Validate
-    env:
-      GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
-      GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
