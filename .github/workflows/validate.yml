@@ -1,0 +1,89 @@
+
+name: "Validate"
+
+on:
+  workflow_call:
+    inputs:
+      post_result_comment:
+        description: Whether or not to add a comment to the context's PR with the Terraform command results.
+        required: false
+        type: boolean
+        default: true
+      tf_version:
+        description: Which version of terraform to use, eg. 1.1.2 or 0.15.5
+        required: true
+        type: string
+      tf_working_directory:
+        description: The directory from which to run terraform commands
+        required: false
+        type: string
+        default: "."
+
+jobs:
+  Terraform:
+    name: Terraform Validate
+    env:
+      GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+      GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: webfactory/ssh-agent@master
+        with:
+          ssh-private-key: ${{ secrets.CI_BOT_SSH_PRIVATE_KEY }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1.2.1
+        with:
+          terraform_version: ${{ inputs.tf_version }}
+          terraform_wrapper: false
+
+      - name: Terraform fmt
+        id: fmt
+        run: |-
+          output=$(terraform fmt -diff -no-color)
+          output="${output//$'\n'/\%0A}"
+          if [[ -z $output ]]; then output="No formatting errors found."; fi
+          echo "::set-output name=stdout::$output"
+        continue-on-error: true
+        working-directory: ${{ inputs.tf_working_directory }}
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+        working-directory: ${{ inputs.tf_working_directory }}
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+        working-directory: ${{ inputs.tf_working_directory }}
+
+      - uses: actions/github-script@v2.0.1
+        if: inputs.post_result_comment && (success() || failure())
+        env:
+          FMT_OUT: ${{ steps.fmt.outputs.stdout }}
+          PLAN_OUT: ${{ steps.plan.outputs.stdout }}
+        with:
+          script: |
+            const output = `#### Initialization: ️${{ steps.init.outcome }}
+            #### Format and Style:
+            \`\`\`
+            ${process.env.FMT_OUT}
+            \`\`\`
+            #### Validation: ${{ steps.validate.outcome }}
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: tfsec
+        if: success() || failure()
+        uses: reviewdog/action-tfsec@master
+        with:
+          reporter: github-pr-review
+          fail_on_error: "false"
+          filter_mode: "nofilter" # Check all files, not just the diff
