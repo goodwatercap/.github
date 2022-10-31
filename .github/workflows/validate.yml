@@ -73,7 +73,7 @@ jobs:
             \`\`\`
             #### Validation: ${{ steps.validate.outcome }}
             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*
-            *Working directory: ${{ inputs.tf_working_directory }}*`;
+            *Working directory: \`${{ inputs.tf_working_directory }}\`*`;
             github.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
