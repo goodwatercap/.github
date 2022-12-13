@@ -128,7 +128,7 @@ jobs:
         run: |-
           gcloud container clusters get-credentials ${{ secrets.k8s_cluster_id }} --zone ${{ secrets.k8s_cluster_zone }}
 
-      - name: Setup Node 14 for Tests
+      - name: Setup Node
         if:  ${{ inputs.yarn }}
         uses: actions/setup-node@v3
         with:
