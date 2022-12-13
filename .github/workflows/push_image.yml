@@ -24,6 +24,11 @@ on:
         required: false
         type: boolean
         default: false
+      yarn:
+        description: Whether to set up Node and Yarn before building the image
+        required: false
+        type: boolean
+        default: false
     secrets:
       CI_BOT_TOKEN:
         description: GITHUB_TOKEN environment variable to run merge_prs script
@@ -122,6 +127,26 @@ jobs:
         if: env.HAS_CREDENTIALS
         run: |-
           gcloud container clusters get-credentials ${{ secrets.k8s_cluster_id }} --zone ${{ secrets.k8s_cluster_zone }}
+
+      - name: Setup Node 14 for Tests
+        if:  ${{ inputs.yarn }}
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "14.15.4"
+
+      - name: Get yarn cache directory path
+        if:  ${{ inputs.yarn }}
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - uses: actions/cache@v2
+        if:  ${{ inputs.yarn }}
+        id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
 
       - name: Build and push image
         uses: docker/build-push-action@v1
