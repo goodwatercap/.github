@@ -127,6 +127,8 @@ jobs:
           credentials_json: ${{ secrets.gcp_service_account_key }}
 
       - uses: google-github-actions/setup-gcloud@v0 # terraform-bot
+        with:
+          install_components: "gke-gcloud-auth-plugin"
 
       - run: |-
           gcloud --quiet auth configure-docker
