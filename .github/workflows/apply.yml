@@ -192,6 +192,8 @@ jobs:
           rm apply_output.txt
           exit $tf_status
         working-directory: ${{ inputs.tf_working_directory }}
+        with:
+          install_components: "gke-gcloud-auth-plugin"
 
       - uses: actions/github-script@v2.0.1
         if: inputs.post_result_comment && (success() || failure())
