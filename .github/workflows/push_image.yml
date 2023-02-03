@@ -29,6 +29,10 @@ on:
         required: false
         type: boolean
         default: false
+      tag:
+        description: Any additional tag to add to the image
+        required: false
+        type: string
     secrets:
       CI_BOT_TOKEN:
         description: GITHUB_TOKEN environment variable to run merge_prs script
@@ -103,7 +107,7 @@ jobs:
         run: |-
           output=$(git rev-parse HEAD)
           echo "HEAD is now at SHA: $output"
-          echo "::set-output name=stdout::$output"
+          echo "stdout=$output" >> $GITHUB_OUTPUT
 
       - uses: webfactory/ssh-agent@v0.4.1
         with:
@@ -145,4 +149,4 @@ jobs:
           password: ${{ secrets.gcp_service_account_key }}
           registry: gcr.io
           repository: ${{ secrets.repository }}
-          tags: ${{ steps.get_sha.outputs.stdout }}
+          tags: ${{ steps.get_sha.outputs.stdout }},${{ inputs.tags }}
