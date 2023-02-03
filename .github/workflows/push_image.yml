@@ -146,3 +146,4 @@ jobs:
           registry: gcr.io
           repository: ${{ secrets.repository }}
           tags: ${{ steps.get_sha.outputs.stdout }}
+          tag_with_ref: true
