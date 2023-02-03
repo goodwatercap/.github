@@ -102,12 +102,17 @@ jobs:
             -t "{{ range . }}{{ .number }} {{ .headRefName }} {{ .mergeable }}
           {{end}}" | grep MERGEABLE | sort -n | cut -d ' ' -f2 | xargs -I{} -n1 git merge origin/{}
 
-      - name: Get current SHA
-        id: get_sha
+      - name: Get tags
+        id: get_tags
         run: |-
-          output=$(git rev-parse HEAD)
-          echo "HEAD is now at SHA: $output"
-          echo "stdout=$output" >> $GITHUB_OUTPUT
+          git_sha=$(git rev-parse HEAD)
+          echo "HEAD is now at SHA: $git_sha"
+          tags=$git_sha
+          for x in {{ inputs.tags }} do
+            tags+=",$x"
+          done
+          echo "Final tags: $tags"
+          echo "tags=$tags" >> $GITHUB_OUTPUT
 
       - uses: webfactory/ssh-agent@v0.4.1
         with:
@@ -142,11 +147,11 @@ jobs:
           cache: 'yarn'
 
       - name: Build and push image
-        uses: docker/build-push-action@v1
+        uses: docker/build-push-action@v4
         with:
           dockerfile: ${{ inputs.dockerfile }}
           username: _json_key
           password: ${{ secrets.gcp_service_account_key }}
           registry: gcr.io
           repository: ${{ secrets.repository }}
-          tags: ${{ steps.get_sha.outputs.stdout }},${{ inputs.tags }}
+          tags: ${{ steps.get_tags.outputs.tags }}
