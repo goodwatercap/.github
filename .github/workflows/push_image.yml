@@ -111,7 +111,9 @@ jobs:
           git_sha=$(git rev-parse HEAD)
           echo "HEAD is now at SHA: $git_sha"
           tags=$git_sha
-          for x in {{ inputs.tags }} do
+          echo "Splitting ${{ inputs.tags }}"
+          for x in "${{ inputs.tags }}"; do
+            echo "Adding $x"
             tags+=",$x"
           done
           echo "Final tags: $tags"
