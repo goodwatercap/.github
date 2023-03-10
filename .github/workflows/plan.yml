@@ -30,7 +30,7 @@ on:
         required: false
         type: string
       tf_version:
-        description: Which version of terraform to use, eg. 1.1.2 or 0.15.5
+        description: Which version of terraform to use, eg. 1.1.2 or 0.15.5. If unset, reads .terraform-version in the repo root.
         required: false
         type: string
         default: ''
