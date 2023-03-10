@@ -213,30 +213,10 @@ jobs:
         if: inputs.post_result_comment && (success() || failure())
         with:
           script: |
-            const { promises: fs } = require('fs')
+            const replacement = `</details>
+            <details><summary><b>Next Section<b></summary>`;
 
-            let path = "tf/plan_output.txt"
-            let content = await fs.readFile(path, 'utf8')
-
-            console.log(content)
-            const output = `#### Testing:
-            \`\`\`
-            ${content}
-            \`\`\`
-            `;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
-
-      - uses: actions/github-script@v6
-        if: inputs.post_result_comment && (success() || failure())
-        with:
-          script: |
-            const output = `#### Initialization: ️${{ steps.init.outcome }}
+            let output = `#### Initialization: ️${{ steps.init.outcome }}
             #### Format and Style:
             \`\`\`
             ${{ steps.fmt.outputs.fmt_output }}
@@ -250,6 +230,7 @@ jobs:
 
             </details>
             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+            output = output.replace("─────────────────────────────────────────────────────────────────────────────", replacement);
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
