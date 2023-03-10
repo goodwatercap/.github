@@ -202,25 +202,22 @@ jobs:
           output=$(cat apply_output.txt)
           output="${output/Note: Objects have changed*Terraform will perform the following actions/Terraform will perform the following actions}"
           output="${output//$'\n'/\%0A}"
-          echo "::set-output name=stdout::$output"
+          echo "apply_output=$output" >> "$GITHUB_OUTPUT"
           rm apply_output.txt
           exit $tf_status
         working-directory: ${{ inputs.tf_working_directory }}
 
-      - uses: actions/github-script@v2.0.1
+      - uses: actions/github-script@v6
         if: inputs.post_result_comment && (success() || failure())
-        env:
-          FMT_OUT: ${{ steps.fmt.outputs.stdout }}
-          APPLY_OUT: ${{ steps.apply.outputs.stdout }}
         with:
           script: |
             const output = `#### Initialization: ️${{ steps.init.outcome }}
             #### Apply: ${{ steps.apply.outcome }}
             \`\`\`
-            ${process.env.APPLY_OUT}
+            ${{ steps.apply.outputs.apply_output }}
             \`\`\`
             *Requester: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
-            github.issues.createComment({
+            github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
