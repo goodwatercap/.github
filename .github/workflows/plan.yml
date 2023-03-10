@@ -199,7 +199,7 @@ jobs:
           output=$(cat plan_output.txt)
             # output="${output/Note: Objects have changed*Terraform will perform the following actions/Terraform will perform the following actions}"
             # output="${output/Note: Objects have changed*No changes./No changes.}"
-            # output="${output//$'\n'/\%0A}"
+          output="${output//$'\n'/\%0A}"
           echo "plan_output=$output" >> "$GITHUB_OUTPUT"
           exit $tf_status
         working-directory: ${{ inputs.tf_working_directory }}
@@ -216,9 +216,8 @@ jobs:
             \`\`\`
             ${contents}
             \`\`\`
-            `
+            `;
 
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
