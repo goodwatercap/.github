@@ -31,8 +31,9 @@ on:
         type: string
       tf_version:
         description: Which version of terraform to use, eg. 1.1.2 or 0.15.5
-        required: true
+        required: false
         type: string
+        default: ''
       tf_prefix:
         description: The terraform backend's prefix within the GCS bucket
         required: false
@@ -113,9 +114,21 @@ jobs:
       - name: Get current SHA
         id: get_sha
         run: |-
-          output=$(git rev-parse HEAD)
-          echo "HEAD is now at SHA: $output"
-          echo "::set-output name=stdout::$output"
+          sha=$(git rev-parse HEAD)
+          echo "HEAD is now at SHA: $sha"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Get Terraform Version
+        id: get_tf_version
+        run: |-
+          input_version=${{ inputs.tf_version }}
+          if [[ -z $input_version ]]; then
+            tf_version=`cat .terraform-version`
+            echo "Using .terraform-version: $tf_version"
+            echo "tf_version=$tf_version" >> "$GITHUB_OUTPUT"
+          else
+            echo "Using tf_version from input: $input_version"
+            echo "tf_version=$input_version" >> "$GITHUB_OUTPUT"
 
       - uses: webfactory/ssh-agent@v0.4.1
         with:
@@ -145,7 +158,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1.2.1
         with:
-          terraform_version: ${{ inputs.tf_version }}
+          terraform_version: ${{ steps.get_tf_version.outputs.tf_version }}
           terraform_wrapper: false
 
       - name: Terraform fmt
