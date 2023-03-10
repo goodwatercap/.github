@@ -136,6 +136,7 @@ jobs:
           else
             echo "Using tf_version from input: $input_version"
             echo "tf_version=$input_version" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: webfactory/ssh-agent@v0.4.1
         with:
