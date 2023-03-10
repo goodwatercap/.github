@@ -197,8 +197,9 @@ jobs:
           tf_status=${PIPESTATUS[0]}
           output=$(cat plan_output.txt)
           output="${output/Note: Objects have changed*Terraform will perform the following actions/Terraform will perform the following actions}"
+          output="${output/Note: Objects have changed*No changes./No changes.}"
           output="${output//$'\n'/\%0A}"
-          echo "::set-output name=stdout::$output"
+          echo "plan_output=$output" >> "$GITHUB_OUTPUT"
           rm plan_output.txt
           exit $tf_status
         working-directory: ${{ inputs.tf_working_directory }}
@@ -216,12 +217,15 @@ jobs:
             ${process.env.FMT_OUT}
             \`\`\`
             #### Validation: ${{ steps.validate.outcome }}
-            #### Plan: ${{ steps.plan.outcome }}
+            <details><summary><b>Plan: ${{ steps.plan.outcome }}</b></summary>
+
             \`\`\`
-            ${process.env.PLAN_OUT}
+            ${{ steps.plan.outputs.plan_output }}
             \`\`\`
+
+            </details>
             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
-            github.issues.createComment({
+            github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
