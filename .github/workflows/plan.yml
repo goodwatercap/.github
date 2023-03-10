@@ -206,11 +206,10 @@ jobs:
 
       - uses: actions/github-script@v6
         if: inputs.post_result_comment && (success() || failure())
-        working-directory: ${{ inputs.tf_working_directory }}
         with:
           script: |
             var fr=new FileReader();
-            fr.readAsText("plan_output.txt");
+            fr.readAsText("tf/plan_output.txt");
             const contents = fr.result;
             console.log(contents)
             const output = `#### Testing:
