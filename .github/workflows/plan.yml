@@ -197,9 +197,9 @@ jobs:
           # See https://linux.samba.narkive.com/Oc6yBphD/clug-tee-eats-the-return-code-of-the-previous-entry-in-the-pipeline#post4
           tf_status=${PIPESTATUS[0]}
           output=$(cat plan_output.txt)
-          output="${output/Note: Objects have changed*Terraform will perform the following actions/Terraform will perform the following actions}"
-          output="${output/Note: Objects have changed*No changes./No changes.}"
-          output="${output//$'\n'/\%0A}"
+            # output="${output/Note: Objects have changed*Terraform will perform the following actions/Terraform will perform the following actions}"
+            # output="${output/Note: Objects have changed*No changes./No changes.}"
+            # output="${output//$'\n'/\%0A}"
           echo "plan_output=$output" >> "$GITHUB_OUTPUT"
           rm plan_output.txt
           exit $tf_status
