@@ -208,13 +208,15 @@ jobs:
         if: inputs.post_result_comment && (success() || failure())
         with:
           script: |
-            var fr=new FileReader();
-            fr.readAsText("tf/plan_output.txt");
-            const contents = fr.result;
-            console.log(contents)
+            const { promises: fs } = require('fs')
+
+            let path = "tf/plan_output.txt"
+            let content = await fs.readFile(path, 'utf8')
+
+            console.log(content)
             const output = `#### Testing:
             \`\`\`
-            ${contents}
+            ${content}
             \`\`\`
             `;
 
