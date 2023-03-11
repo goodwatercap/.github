@@ -230,7 +230,7 @@ jobs:
 
             </details>
 
-            <details><summary><b><i>Verbose plan output:</i></b></summary>
+            <details><summary><i>verbose plan output</i></summary>
 
             \`\`\`
             ${{ steps.plan.outputs.full_output }}
