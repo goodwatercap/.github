@@ -197,7 +197,9 @@ jobs:
           # See https://linux.samba.narkive.com/Oc6yBphD/clug-tee-eats-the-return-code-of-the-previous-entry-in-the-pipeline#post4
           tf_status=${PIPESTATUS[0]}
 
+          # Trim the preamble
           sed -n '/─────────────────────────────────────────────────────────────────────────────/,$p' full_output.txt > plan_output.txt
+
           # exceptionally unnecessary security hardening
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           echo "plan_output<<$EOF" >> "$GITHUB_OUTPUT"
