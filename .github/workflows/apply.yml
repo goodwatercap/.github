@@ -195,15 +195,23 @@ jobs:
           cat <<- EOF >> terraform.tfvars.json
             ${{ inputs.tf_var_json }}
           EOF
-          terraform apply --auto-approve --input=false -no-color 2>&1 | tee apply_output.txt
-          # Use PIPESTATUS to capture errors in terraform apply:
+          terraform apply --auto-approve --input=false -no-color 2>&1 | tee full_output.txt
+          # Use PIPESTATUS to capture errors in terraform plan:
           # See https://linux.samba.narkive.com/Oc6yBphD/clug-tee-eats-the-return-code-of-the-previous-entry-in-the-pipeline#post4
           tf_status=${PIPESTATUS[0]}
-          output=$(cat apply_output.txt)
-          output="${output/Note: Objects have changed*Terraform will perform the following actions/Terraform will perform the following actions}"
-          output="${output//$'\n'/\%0A}"
-          echo "apply_output=$output" >> "$GITHUB_OUTPUT"
-          rm apply_output.txt
+
+          # Trim the preamble
+          sed -n '/─────────────────────────────────────────────────────────────────────────────/,$p' full_output.txt > apply_output.txt
+
+          # exceptionally unnecessary security hardening
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "apply_output<<$EOF" >> "$GITHUB_OUTPUT"
+          cat apply_output.txt >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
+
+          echo "full_output<<$EOF" >> "$GITHUB_OUTPUT"
+          cat full_output.txt >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
           exit $tf_status
         working-directory: ${{ inputs.tf_working_directory }}
 
@@ -212,10 +220,22 @@ jobs:
         with:
           script: |
             const output = `#### Initialization: ️${{ steps.init.outcome }}
-            #### Apply: ${{ steps.apply.outcome }}
+
+            <details><summary><b>Apply: ${{ steps.apply.outcome }}</b></summary>
+
             \`\`\`
             ${{ steps.apply.outputs.apply_output }}
             \`\`\`
+
+            </details>
+
+            <details><summary><i>verbose apply output</i></summary>
+
+            \`\`\`
+            ${{ steps.apply.outputs.full_output }}
+            \`\`\`
+
+            </details>
             *Requester: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
