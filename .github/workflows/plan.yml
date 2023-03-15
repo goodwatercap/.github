@@ -166,9 +166,12 @@ jobs:
         id: fmt
         run: |-
           output=$(terraform fmt -diff -no-color)
-          output="${output//$'\n'/\%0A}"
           if [[ -z $output ]]; then output="No formatting errors found."; fi
-          echo "fmt_output=$output" >> "$GITHUB_OUTPUT"
+
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "fmt_output<<$EOF" >> "$GITHUB_OUTPUT"
+          echo "$output" >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
         continue-on-error: true
         working-directory: ${{ inputs.tf_working_directory }}
 
@@ -230,13 +233,14 @@ jobs:
 
             </details>
 
-            <details><summary><i>verbose plan output</i></summary>
+            <details><summary><i>full plan logs</i></summary>
 
             \`\`\`
             ${{ steps.plan.outputs.full_output }}
             \`\`\`
 
             </details>
+
             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
