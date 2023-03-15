@@ -225,7 +225,7 @@ jobs:
             ${{ steps.fmt.outputs.fmt_output }}
             \`\`\`
             #### Validation: ${{ steps.validate.outcome }}
-            <details><summary><b>Plan: ${{ steps.plan.outcome }}</b></summary>
+            <details open><summary><b>Plan: ${{ steps.plan.outcome }}</b></summary>
 
             \`\`\`
             ${{ steps.plan.outputs.plan_output }}
