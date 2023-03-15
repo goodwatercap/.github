@@ -221,7 +221,7 @@ jobs:
           script: |
             const output = `#### Initialization: ️${{ steps.init.outcome }}
 
-            <details><summary><b>Apply: ${{ steps.apply.outcome }}</b></summary>
+            <details open><summary><b>Apply: ${{ steps.apply.outcome }}</b></summary>
 
             \`\`\`
             ${{ steps.apply.outputs.apply_output }}
