@@ -229,13 +229,14 @@ jobs:
 
             </details>
 
-            <details><summary><i>verbose apply output</i></summary>
+            <details><summary><i>full apply logs</i></summary>
 
             \`\`\`
             ${{ steps.apply.outputs.full_output }}
             \`\`\`
 
             </details>
+
             *Requester: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,

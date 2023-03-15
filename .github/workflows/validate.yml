@@ -4,6 +4,11 @@ name: "Validate"
 on:
   workflow_call:
     inputs:
+      github_ref:
+        description: Override of GITHUB_REF environment variable (ie, what branch to run tf against)
+        required: false
+        type: string
+        default: ''
       post_result_comment:
         default: true
         description: Whether or not to add a comment to the context's PR with the Terraform command results.
@@ -28,10 +33,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref:  ${{ inputs.github_ref }}
 
       - uses: webfactory/ssh-agent@v0.4.1
         with:
           ssh-private-key: ${{ secrets.ssh_agent_private_key }}
+
+      - name: Get Terraform Version
+        id: get_tf_version
+        run: |-
+          input_version=${{ inputs.tf_version }}
+          if [[ -z $input_version ]]; then
+            tf_version=`cat .terraform-version`
+            echo "Using .terraform-version: $tf_version"
+            echo "tf_version=$tf_version" >> "$GITHUB_OUTPUT"
+          else
+            echo "Using tf_version from input: $input_version"
+            echo "tf_version=$input_version" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1.2.1
@@ -43,9 +63,12 @@ jobs:
         id: fmt
         run: |-
           output=$(terraform fmt -diff -no-color)
-          output="${output//$'\n'/\%0A}"
           if [[ -z $output ]]; then output="No formatting errors found."; fi
-          echo "::set-output name=stdout::$output"
+
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "fmt_output<<$EOF" >> "$GITHUB_OUTPUT"
+          echo "$output" >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
         continue-on-error: true
         working-directory: ${{ inputs.tf_working_directory }}
 
@@ -59,22 +82,20 @@ jobs:
         run: terraform validate -no-color
         working-directory: ${{ inputs.tf_working_directory }}
 
-      - uses: actions/github-script@v2.0.1
+      - uses: actions/github-script@v6
         if: inputs.post_result_comment && (success() || failure())
-        env:
-          FMT_OUT: ${{ steps.fmt.outputs.stdout }}
-          PLAN_OUT: ${{ steps.plan.outputs.stdout }}
         with:
           script: |
             const output = `#### Initialization: ️${{ steps.init.outcome }}
             #### Format and Style:
             \`\`\`
-            ${process.env.FMT_OUT}
+            ${{ steps.fmt.outputs.fmt_output }}
             \`\`\`
             #### Validation: ${{ steps.validate.outcome }}
+
             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*
             *Working directory: \`${{ inputs.tf_working_directory }}\`*`;
-            github.issues.createComment({
+            github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
