@@ -135,13 +135,14 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.ssh_agent_private_key }}
 
-      - uses: google-github-actions/auth@v0
+      - uses: google-github-actions/auth@v1
         with:
           project_id: ${{ secrets.gcp_project_id }}
           credentials_json: ${{ secrets.gcp_service_account_key }}
 
-      - uses: google-github-actions/setup-gcloud@v0 # terraform-bot
+      - uses: google-github-actions/setup-gcloud@v1
         with:
+          version: '>= 422.0.0'
           install_components: "gke-gcloud-auth-plugin"
 
       - run: |-
