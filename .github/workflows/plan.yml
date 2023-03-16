@@ -161,9 +161,6 @@ jobs:
         run: |-
           gcloud container clusters get-credentials ${{ secrets.k8s_cluster_id }} --zone ${{ secrets.k8s_cluster_zone }}
 
-      - run: |-
-          gcloud --quiet auth configure-docker
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1.2.1
         with:
