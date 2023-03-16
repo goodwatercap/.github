@@ -141,12 +141,14 @@ jobs:
           project_id: ${{ secrets.gcp_project_id }}
           credentials_json: ${{ secrets.gcp_service_account_key }}
 
-      - uses: google-github-actions/setup-gcloud@v1
+      - name: Use System GCloud
+        uses: google-github-actions/setup-gcloud@v1
         if: ${{ ! env.HAS_CREDENTIALS }}
         with:
           skip_install: True
 
-      - uses: google-github-actions/setup-gcloud@v1
+      - name: Setup GCloud with GKE Auth Plugin
+        uses: google-github-actions/setup-gcloud@v1
         if: env.HAS_CREDENTIALS
         with:
           version: '>= 422.0.0'
