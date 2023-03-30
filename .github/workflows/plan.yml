@@ -170,13 +170,10 @@ jobs:
       - name: Terraform fmt
         id: fmt
         run: |-
-          output=$(terraform fmt -diff -no-color)
-          if [[ -z $output ]]; then output="No formatting errors found."; fi
+          terraform fmt -diff 2>&1 | tee fmt.txt
+          tf_status=${PIPESTATUS[0]}
 
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "fmt_output<<$EOF" >> "$GITHUB_OUTPUT"
-          echo "$output" >> "$GITHUB_OUTPUT"
-          echo "$EOF" >> "$GITHUB_OUTPUT"
+          if [[ -z $(cat fmt.txt) ]]; then echo "No formatting errors found." >> fmt.txt; fi
         continue-on-error: true
         working-directory: ${{ inputs.tf_working_directory }}
 
@@ -188,8 +185,10 @@ jobs:
 
       - name: Terraform Validate
         id: validate
-        run: terraform validate
         working-directory: ${{ inputs.tf_working_directory }}
+        run: |-
+          terraform validate 2>&1 | tee validate.txt
+          exit ${PIPESTATUS[0]}
 
       - name: Terraform Plan
         id: plan
@@ -200,13 +199,13 @@ jobs:
           cat <<- EOF >> terraform.tfvars.json
             ${{ inputs.tf_var_json }}
           EOF
-          terraform plan -input=false -out=terraform.plan -lock-timeout=120s  2>errors.txt | tee full_output.txt
+          terraform plan -input=false -out=terraform.plan -lock-timeout=120s  2>plan_errors.txt | tee full_output.txt
           # Use PIPESTATUS to capture errors in terraform plan:
           # See https://linux.samba.narkive.com/Oc6yBphD/clug-tee-eats-the-return-code-of-the-previous-entry-in-the-pipeline#post4
           tf_status=${PIPESTATUS[0]}
 
           # Make sure errors are still visible in logs
-          cat errors.txt
+          cat plan_errors.txt
 
           # Trim the preamble
           sed -n '/─────────────────────────────────────────────────────────────────────────────/,$p' full_output.txt > plan_output.txt
@@ -219,16 +218,25 @@ jobs:
         with:
           script: |
             const fs = require('fs')
+            const fmt = fs.readFileSynce('fmt.txt', 'utf8')
+            const validate = fs.readFileSynce('validate.txt', 'utf8')
             const plan_output = fs.readFileSync('plan_output.txt', 'utf8')
             const full_output = fs.readFileSync('full_output.txt', 'utf8')
-            const errors = fs.readFileSync('errors.txt', 'utf8')
+            const errors = fs.readFileSync('plan_errors.txt', 'utf8')
 
             const output = `#### Initialization: ️${{ steps.init.outcome }}
-            #### Format and Style:
+            <details open><summary><b>Format and Style: ${{ steps.fmt.outcome }}</b></summary>
             \`\`\`
-            ${{ steps.fmt.outputs.fmt_output }}
+            ${fmt}
             \`\`\`
-            #### Validation: ${{ steps.validate.outcome }}
+            </details>
+
+            <details open><summary><b>Validation: ${{ steps.validate.outcome }}</b></summary>
+            \`\`\`
+            ${validate}
+            \`\`\`
+            </details>
+
             <details open><summary><b>Plan: ${{ steps.plan.outcome }}</b></summary>
 
             \`\`\`
