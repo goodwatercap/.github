@@ -218,8 +218,8 @@ jobs:
         with:
           script: |
             const fs = require('fs')
-            const fmt = fs.readFileSynce('fmt.txt', 'utf8')
-            const validate = fs.readFileSynce('validate.txt', 'utf8')
+            const fmt = fs.readFileSync('fmt.txt', 'utf8')
+            const validate = fs.readFileSync('validate.txt', 'utf8')
             const plan_output = fs.readFileSync('plan_output.txt', 'utf8')
             const full_output = fs.readFileSync('full_output.txt', 'utf8')
             const errors = fs.readFileSync('plan_errors.txt', 'utf8')
