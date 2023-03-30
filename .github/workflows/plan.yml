@@ -72,7 +72,7 @@ jobs:
       HAS_CREDENTIALS: ${{ secrets.k8s_cluster_id && secrets.k8s_cluster_zone }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref:  ${{ inputs.github_ref }}
           fetch-depth: 0
@@ -226,6 +226,15 @@ jobs:
             const full_output = fs.readFileSync('${{ inputs.tf_working_directory }}/full_output.txt', 'utf8')
             const errors = fs.readFileSync('${{ inputs.tf_working_directory }}/plan_errors.txt', 'utf8')
 
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            })
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('Format and Style')
+            })
+
             const output = `#### Initialization: ️${{ steps.init.outcome }}
             <details open><summary><b>Format and Style: ${{ steps.fmt.outcome }}</b></summary>
 
@@ -268,12 +277,22 @@ jobs:
             </details>
 
             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
+
+            if (botComment) {
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
             })
+            } else {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
 
       - name: tfsec
         if: success() || failure()
