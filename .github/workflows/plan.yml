@@ -211,19 +211,6 @@ jobs:
           # Trim the preamble
           sed -n '/─────────────────────────────────────────────────────────────────────────────/,$p' full_output.txt > plan_output.txt
 
-          # exceptionally unnecessary security hardening
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "plan_output<<$EOF" >> "$GITHUB_OUTPUT"
-          cat plan_output.txt >> "$GITHUB_OUTPUT"
-          echo "$EOF" >> "$GITHUB_OUTPUT"
-
-          echo "full_output<<$EOF" >> "$GITHUB_OUTPUT"
-          cat full_output.txt >> "$GITHUB_OUTPUT"
-          if [[ -n errors.txt ]]; then
-            echo "----- ERROR LOG -----" >> "$GITHUB_OUTPUT"
-            cat errors.txt >> "$GITHUB_OUTPUT"
-          fi
-          echo "$EOF" >> "$GITHUB_OUTPUT"
           exit $tf_status
         working-directory: ${{ inputs.tf_working_directory }}
 
@@ -231,6 +218,11 @@ jobs:
         if: inputs.post_result_comment && (success() || failure())
         with:
           script: |
+            const fs = require('fs')
+            const plan_output = fs.readFileSync('plan_output.txt', 'utf8')
+            const full_output = fs.readFileSync('full_output.txt', 'utf8')
+            const errors = fs.readFileSync('errors.txt', 'utf8')
+
             const output = `#### Initialization: ️${{ steps.init.outcome }}
             #### Format and Style:
             \`\`\`
@@ -240,7 +232,15 @@ jobs:
             <details open><summary><b>Plan: ${{ steps.plan.outcome }}</b></summary>
 
             \`\`\`
-            ${{ steps.plan.outputs.plan_output }}
+            ${plan_output}
+            \`\`\`
+
+            </details>
+
+            <details><summary><i>error logs</i></summary>
+
+            \`\`\`
+            ${errors}
             \`\`\`
 
             </details>
@@ -248,7 +248,7 @@ jobs:
             <details><summary><i>full plan logs</i></summary>
 
             \`\`\`
-            ${{ steps.plan.outputs.full_output }}
+            ${full_output}
             \`\`\`
 
             </details>
