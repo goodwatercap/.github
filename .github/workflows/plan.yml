@@ -42,6 +42,7 @@ on:
         description: The directory from which to run terraform commands
         required: false
         type: string
+        default: '.'
     secrets:
       CI_BOT_TOKEN:
         description: GITHUB_TOKEN environment variable to run merge_prs script
@@ -216,15 +217,14 @@ jobs:
 
       - uses: actions/github-script@v6
         if: inputs.post_result_comment && (success() || failure())
-        working-directory: ${{ inputs.tf_working_directory }}
         with:
           script: |
             const fs = require('fs')
-            const fmt = fs.readFileSync('fmt.txt', 'utf8')
-            const validate = fs.readFileSync('validate.txt', 'utf8')
-            const plan_output = fs.readFileSync('plan_output.txt', 'utf8')
-            const full_output = fs.readFileSync('full_output.txt', 'utf8')
-            const errors = fs.readFileSync('plan_errors.txt', 'utf8')
+            const fmt = fs.readFileSync('${{ inputs.tf_working_directory }}/fmt.txt', 'utf8')
+            const validate = fs.readFileSync('${{ inputs.tf_working_directory }}/validate.txt', 'utf8')
+            const plan_output = fs.readFileSync('${{ inputs.tf_working_directory }}/plan_output.txt', 'utf8')
+            const full_output = fs.readFileSync('${{ inputs.tf_working_directory }}/full_output.txt', 'utf8')
+            const errors = fs.readFileSync('${{ inputs.tf_working_directory }}/plan_errors.txt', 'utf8')
 
             const output = `#### Initialization: ️${{ steps.init.outcome }}
             <details open><summary><b>Format and Style: ${{ steps.fmt.outcome }}</b></summary>
