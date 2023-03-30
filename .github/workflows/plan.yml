@@ -228,15 +228,19 @@ jobs:
 
             const output = `#### Initialization: ️${{ steps.init.outcome }}
             <details open><summary><b>Format and Style: ${{ steps.fmt.outcome }}</b></summary>
+
             \`\`\`
             ${fmt}
             \`\`\`
+
             </details>
 
             <details open><summary><b>Validation: ${{ steps.validate.outcome }}</b></summary>
+
             \`\`\`
             ${validate}
             \`\`\`
+
             </details>
 
             <details open><summary><b>Plan: ${{ steps.plan.outcome }}</b></summary>
