@@ -215,15 +215,6 @@ jobs:
           # Trim the preamble
           sed -n '/─────────────────────────────────────────────────────────────────────────────/,$p' full_output.txt > apply_output.txt
 
-          # exceptionally unnecessary security hardening
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "apply_output<<$EOF" >> "$GITHUB_OUTPUT"
-          cat apply_output.txt >> "$GITHUB_OUTPUT"
-          echo "$EOF" >> "$GITHUB_OUTPUT"
-
-          echo "full_output<<$EOF" >> "$GITHUB_OUTPUT"
-          cat full_output.txt >> "$GITHUB_OUTPUT"
-          echo "$EOF" >> "$GITHUB_OUTPUT"
           exit $tf_status
         working-directory: ${{ inputs.tf_working_directory }}
 
@@ -231,12 +222,25 @@ jobs:
         if: inputs.post_result_comment && (success() || failure())
         with:
           script: |
+            const fs = require('fs')
+            const apply_output = fs.readFileSync('${{ inputs.tf_working_directory }}/apply_output.txt', 'utf8')
+            const full_output = fs.readFileSync('${{ inputs.tf_working_directory }}/full_output.txt', 'utf8')
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            })
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('Format and Style')
+            })
+
             const output = `#### Initialization: ️${{ steps.init.outcome }}
 
             <details open><summary><b>Apply: ${{ steps.apply.outcome }}</b></summary>
 
             \`\`\`
-            ${{ steps.apply.outputs.apply_output }}
+            ${apply_output}
             \`\`\`
 
             </details>
@@ -244,16 +248,25 @@ jobs:
             <details><summary><i>full apply logs</i></summary>
 
             \`\`\`
-            ${{ steps.apply.outputs.full_output }}
+            ${full_output}
             \`\`\`
 
             </details>
 
             *Requester: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
+            if (botComment) {
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
             })
+            } else {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
 
