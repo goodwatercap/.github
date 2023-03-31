@@ -238,7 +238,7 @@ jobs:
             const output = `#### Initialization: ️${{ steps.init.outcome }}
             <details open><summary><b>Format and Style: ${{ steps.fmt.outcome }}</b></summary>
 
-            \`\`\`bash
+            \`\`\`diff
             ${fmt}
             \`\`\`
 
@@ -246,7 +246,7 @@ jobs:
 
             <details open><summary><b>Validation: ${{ steps.validate.outcome }}</b></summary>
 
-            \`\`\`bash
+            \`\`\`diff
             ${validate}
             \`\`\`
 
@@ -254,7 +254,7 @@ jobs:
 
             <details open><summary><b>Plan: ${{ steps.plan.outcome }}</b></summary>
 
-            \`\`\`bash
+            \`\`\`diff
             ${plan_output}
             \`\`\`
 
@@ -262,7 +262,7 @@ jobs:
 
             <details><summary><i>error logs</i></summary>
 
-            \`\`\`bash
+            \`\`\`diff
             ${errors}
             \`\`\`
 
@@ -270,7 +270,7 @@ jobs:
 
             <details><summary><i>full plan logs</i></summary>
 
-            \`\`\`bash
+            \`\`\`diff
             ${full_output}
             \`\`\`
 
