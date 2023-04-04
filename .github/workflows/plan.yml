@@ -220,7 +220,7 @@ jobs:
           cat plan_errors.txt
 
           # Trim the preamble
-          sed -n '/─\{10\}/,$p' full_output.txt > plan_output.txt
+          sed -E -n '/─\{10\}|Terrafrom will perform|No changes/,$p' full_output.txt > plan_output.txt
 
           exit $tf_status
         working-directory: ${{ inputs.tf_working_directory }}
