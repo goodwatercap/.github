@@ -197,15 +197,20 @@ jobs:
           terraform validate -no-color 2>&1 | tee validate.txt
           exit ${PIPESTATUS[0]}
 
-      - name: Terraform Plan
-        id: plan
-        env:
-          TF_VAR_git_sha: ${{ steps.get_sha.outputs.stdout }}
+      - name: Write TFVars
+        if: ${{ inputs.tf_var_json }}
+        working-directory: ${{ inputs.tf_working_directory }}
         run: |-
           # Write the input to the varfile without substitution
           cat <<- EOF >> terraform.tfvars.json
             ${{ inputs.tf_var_json }}
           EOF
+
+      - name: Terraform Plan
+        id: plan
+        env:
+          TF_VAR_git_sha: ${{ steps.get_sha.outputs.stdout }}
+        run: |-
           terraform plan -no-color -input=false -out=terraform.plan -lock-timeout=120s  2>plan_errors.txt | tee full_output.txt
           # Use PIPESTATUS to capture errors in terraform plan:
           # See https://linux.samba.narkive.com/Oc6yBphD/clug-tee-eats-the-return-code-of-the-previous-entry-in-the-pipeline#post4
