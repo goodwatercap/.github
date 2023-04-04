@@ -25,6 +25,11 @@ on:
         required: false
         type: boolean
         default: true
+      skip_full_logs:
+        description: Whether to skip posting the full terraform logs
+        required: false
+        type: boolean
+        default: false
       tf_var_json:
         description: A JSON string to write into terraform.tfvars.json when planning.
         required: false
@@ -214,6 +219,11 @@ jobs:
 
           exit $tf_status
         working-directory: ${{ inputs.tf_working_directory }}
+
+      - name: Trim logs
+        if: ${{ inputs.skip_full_logs }}
+        working-directory: ${{ inputs.tf_working_directory }}
+        run: echo "Logs trimmed due to size" > full_output.txt
 
       - uses: actions/github-script@v6
         if: inputs.post_result_comment && (success() || failure())
