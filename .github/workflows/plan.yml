@@ -172,6 +172,7 @@ jobs:
         working-directory: ${{ inputs.tf_working_directory }}
         run: |-
           # Ensure files exist for the output script, even if steps fail
+          touch init.txt
           touch fmt.txt
           touch validate.txt
           touch plan_output.txt
@@ -198,7 +199,8 @@ jobs:
       - name: Terraform Init
         id: init
         run: |-
-          terraform init -no-color -backend-config="bucket=${{ secrets.tf_bucket }}" -backend-config="prefix=${{ inputs.tf_prefix }}" -reconfigure
+          terraform init -no-color -backend-config="bucket=${{ secrets.tf_bucket }}" -backend-config="prefix=${{ inputs.tf_prefix }}" -reconfigure | tee init.txt
+          exit ${PIPESTATUS[0]}
         working-directory: ${{ inputs.tf_working_directory }}
 
       - name: Terraform Validate
@@ -246,6 +248,7 @@ jobs:
         with:
           script: |
             const fs = require('fs')
+            const init = fs.readFileSync('${{ inputs.tf_working_directory }}/init.txt', 'utf8')
             const fmt = fs.readFileSync('${{ inputs.tf_working_directory }}/fmt.txt', 'utf8')
             const validate = fs.readFileSync('${{ inputs.tf_working_directory }}/validate.txt', 'utf8')
             const plan_output = fs.readFileSync('${{ inputs.tf_working_directory }}/plan_output.txt', 'utf8')
@@ -261,7 +264,15 @@ jobs:
               return comment.user.type === 'Bot' && comment.body.includes('Format and Style')
             })
 
-            const output = `#### Initialization: ️${{ steps.init.outcome }}
+            const output = `## Terraform Plan
+            <details><summary><b>Initialization: ${{ steps.init.outcome }}</b></summary>
+
+            \`\`\`
+            ${init}
+            \`\`\`
+
+            </details>
+
             <details open><summary><b>Format and Style: ${{ steps.fmt.outcome }}</b></summary>
 
             \`\`\`diff
