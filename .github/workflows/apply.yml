@@ -175,6 +175,14 @@ jobs:
       - run: |-
           gcloud --quiet auth configure-docker
 
+      - name: Touch Files
+        if: inputs.post_result_comment
+        working-directory: ${{ inputs.tf_working_directory }}
+        run: |-
+          # Ensure files exist for the output script, even if steps fail
+          touch apply_output.txt
+          touch full_output.txt
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v1.2.1
         with:
