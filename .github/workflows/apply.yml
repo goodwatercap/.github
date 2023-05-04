@@ -244,7 +244,7 @@ jobs:
             const apply_output = fs.readFileSync('${{ inputs.tf_working_directory }}/apply_output.txt', 'utf8')
             const full_output = fs.readFileSync('${{ inputs.tf_working_directory }}/full_output.txt', 'utf8')
 
-            const issue_number = ${{ inputs.pr_issue_number }} || context.issue.number
+            const issue_number = "${{ inputs.pr_issue_number }}" || context.issue.number
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
