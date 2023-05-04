@@ -14,6 +14,11 @@ on:
         description: Whether or not to add a comment to the context's PR with the Terraform command results.
         required: false
         type: boolean
+      pr_issue_number:
+        description: If set, overrides where to send the comments when posting
+        required: false
+        type: string
+        default: ''
       tf_version:
         description: Which version of terraform to use, eg. 1.1.2 or 0.15.5
         required: true
@@ -86,6 +91,16 @@ jobs:
         if: inputs.post_result_comment && (success() || failure())
         with:
           script: |
+            const issue_number = ${{ inputs.pr_issue_number }} || context.issue.number
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue_number,
+            })
+
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('Format and Style')
+            })
             const output = `#### Initialization: ️${{ steps.init.outcome }}
             #### Format and Style:
             \`\`\`
@@ -95,12 +110,22 @@ jobs:
 
             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*
             *Working directory: \`${{ inputs.tf_working_directory }}\`*`;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
+
+            if (botComment) {
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
             })
+            } else {
+              github.rest.issues.createComment({
+                issue_number: issue_number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
 
       - name: tfsec
         if: success() || failure()
