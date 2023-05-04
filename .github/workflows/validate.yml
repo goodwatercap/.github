@@ -91,7 +91,7 @@ jobs:
         if: inputs.post_result_comment && (success() || failure())
         with:
           script: |
-            const issue_number = ${{ inputs.pr_issue_number }} || context.issue.number
+            const issue_number = "${{ inputs.pr_issue_number }}" || context.issue.number
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
