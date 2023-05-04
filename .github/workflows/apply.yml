@@ -251,10 +251,11 @@ jobs:
               issue_number: issue_number,
             })
             const botComment = comments.find(comment => {
-              return comment.user.type === 'Bot' && comment.body.includes('Format and Style')
+              return comment.user.type === 'Bot' && comment.body.includes('Terraform Apply')
             })
 
-            const output = `#### Initialization: ️${{ steps.init.outcome }}
+            const output = `## Terraform Apply
+            #### Initialization: ️${{ steps.init.outcome }}
 
             <details open><summary><b>Apply: ${{ steps.apply.outcome }}</b></summary>
 

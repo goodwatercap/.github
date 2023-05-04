@@ -99,9 +99,10 @@ jobs:
             })
 
             const botComment = comments.find(comment => {
-              return comment.user.type === 'Bot' && comment.body.includes('Format and Style')
+              return comment.user.type === 'Bot' && comment.body.includes('Terraform Validation')
             })
-            const output = `#### Initialization: ️${{ steps.init.outcome }}
+            const output = `## Terraform Validation
+            #### Initialization: ️${{ steps.init.outcome }}
             #### Format and Style:
             \`\`\`
             ${{ steps.fmt.outputs.fmt_output }}
