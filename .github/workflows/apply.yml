@@ -29,6 +29,11 @@ on:
         required: false
         type: boolean
         default: true
+      pr_issue_number:
+        description: If set, overrides where to send the comments when posting
+        required: false
+        type: string
+        default: ''
       tf_var_json:
         description: A JSON string to write into terraform.tfvars.json when applying.
         required: false
@@ -239,10 +244,11 @@ jobs:
             const apply_output = fs.readFileSync('${{ inputs.tf_working_directory }}/apply_output.txt', 'utf8')
             const full_output = fs.readFileSync('${{ inputs.tf_working_directory }}/full_output.txt', 'utf8')
 
+            const issue_number = ${{ inputs.pr_issue_number }} || context.issue.number
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: issue_number,
             })
             const botComment = comments.find(comment => {
               return comment.user.type === 'Bot' && comment.body.includes('Format and Style')
@@ -276,7 +282,7 @@ jobs:
             })
             } else {
               github.rest.issues.createComment({
-                issue_number: context.issue.number,
+                issue_number: issue_number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 body: output

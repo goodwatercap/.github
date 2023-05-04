@@ -25,6 +25,11 @@ on:
         required: false
         type: boolean
         default: true
+      pr_issue_number:
+        description: If set, overrides where to send the comments when posting
+        required: false
+        type: string
+        default: ''
       skip_full_logs:
         description: Whether to skip posting the full terraform logs
         required: false
@@ -255,10 +260,11 @@ jobs:
             const full_output = fs.readFileSync('${{ inputs.tf_working_directory }}/full_output.txt', 'utf8')
             const errors = fs.readFileSync('${{ inputs.tf_working_directory }}/plan_errors.txt', 'utf8')
 
+            const issue_number = ${{ inputs.pr_issue_number }} || context.issue.number
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: issue_number,
             })
             const botComment = comments.find(comment => {
               return comment.user.type === 'Bot' && comment.body.includes('Format and Style')
@@ -324,7 +330,7 @@ jobs:
             })
             } else {
               github.rest.issues.createComment({
-                issue_number: context.issue.number,
+                issue_number: issue_number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 body: output
