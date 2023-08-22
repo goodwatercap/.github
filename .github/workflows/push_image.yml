@@ -29,6 +29,11 @@ on:
         required: false
         type: boolean
         default: false
+      target:
+        description: A target stage to build
+        required: false
+        type: string
+        default: ''
     secrets:
       CI_BOT_TOKEN:
         description: GITHUB_TOKEN environment variable to run merge_prs script
@@ -142,6 +147,7 @@ jobs:
 
       - name: Build and push image
         uses: docker/build-push-action@v1
+        if: ${{ inputs.target == ''  }}
         with:
           dockerfile: ${{ inputs.dockerfile }}
           username: _json_key
@@ -149,4 +155,17 @@ jobs:
           registry: gcr.io
           repository: ${{ secrets.repository }}
           tags: ${{ steps.get_sha.outputs.stdout }}
+          tag_with_ref: true
+
+      - name: Build and push image (with target)
+        uses: docker/build-push-action@v1
+        if: ${{ inputs.target != ''  }}
+        with:
+          dockerfile: ${{ inputs.dockerfile }}
+          username: _json_key
+          password: ${{ secrets.gcp_service_account_key }}
+          registry: gcr.io
+          repository: ${{ secrets.repository }}
+          tags: ${{ steps.get_sha.outputs.stdout }}
+          target: ${{ inputs.target }}
           tag_with_ref: true
