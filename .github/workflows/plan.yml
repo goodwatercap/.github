@@ -295,7 +295,7 @@ jobs:
 
             </details>
 
-            <details open><summary><b>Plan: ${{ steps.plan.outcome }}</b></summary>
+            <details><summary><b>Plan: ${{ steps.plan.outcome }}</b></summary>
 
             \`\`\`diff
             ${plan_output}
