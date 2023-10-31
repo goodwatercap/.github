@@ -66,8 +66,10 @@ on:
       gcp_service_account_key:
         required: true
       k8s_cluster_id:
+        description: deprecated, do not use
         required: false
       k8s_cluster_zone:
+        description: deprecated, do not use
         required: false
       repository:
         description: Repository within Container Registry to push the built Docker image into.
@@ -80,7 +82,6 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
       GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
-      HAS_CREDENTIALS: ${{ secrets.k8s_cluster_id && secrets.k8s_cluster_zone }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -159,23 +160,8 @@ jobs:
 
       - name: Use System GCloud
         uses: google-github-actions/setup-gcloud@v1
-        if: ${{ ! env.HAS_CREDENTIALS }}
         with:
           skip_install: True
-
-      - name: Setup GCloud with GKE Auth Plugin
-        uses: google-github-actions/setup-gcloud@v1
-        if: env.HAS_CREDENTIALS
-        with:
-          version: '>= 422.0.0'
-          install_components: "gke-gcloud-auth-plugin"
-
-      # Get the GKE credentials, so we can plan against the cluster
-      - name: get-credentials
-        # Workaround to https://github.com/actions/runner/issues/520
-        if: env.HAS_CREDENTIALS
-        run: |-
-          gcloud container clusters get-credentials ${{ secrets.k8s_cluster_id }} --zone ${{ secrets.k8s_cluster_zone }}
 
       - run: |-
           gcloud --quiet auth configure-docker
