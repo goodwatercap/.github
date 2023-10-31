@@ -30,6 +30,11 @@ on:
         required: false
         type: string
         default: ''
+      really_actually_use_k8s:
+        description: Help with deprecation of k8s parameters
+        required: false
+        type: boolean
+        default: false
       skip_full_logs:
         description: Whether to skip posting the full terraform logs
         required: false
@@ -79,7 +84,6 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
       GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
-      HAS_CREDENTIALS: ${{ secrets.k8s_cluster_id && secrets.k8s_cluster_zone }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -154,13 +158,13 @@ jobs:
 
       - name: Use System GCloud
         uses: google-github-actions/setup-gcloud@v1
-        if: ${{ ! env.HAS_CREDENTIALS }}
+        if: ${{ ! inputs.really_actually_use_k8s }}
         with:
           skip_install: True
 
       - name: Setup GCloud with GKE Auth Plugin
         uses: google-github-actions/setup-gcloud@v1
-        if: env.HAS_CREDENTIALS
+        if: inputs.really_actually_use_k8s
         with:
           version: '>= 422.0.0'
           install_components: "gke-gcloud-auth-plugin"
@@ -168,7 +172,7 @@ jobs:
       # Get the GKE credentials, so we can plan against the cluster
       - name: get-credentials
         # Workaround to https://github.com/actions/runner/issues/520
-        if: env.HAS_CREDENTIALS
+        if: inputs.really_actually_use_k8s
         run: |-
           gcloud container clusters get-credentials ${{ secrets.k8s_cluster_id }} --zone ${{ secrets.k8s_cluster_zone }}
 
