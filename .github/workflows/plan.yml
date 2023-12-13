@@ -346,9 +346,9 @@ jobs:
         if: success() || failure()
         run: |-
           if [[ -f tfsec.json ]]; then
-            flags="--format=checkstyle --config-file tfsec.json"
+            flags="--config-file tfsec.json"
           else
-            flags="--format=checkstyle"
+            flags=""
           fi
           echo "Setting flags: $flags"
           echo "flags=$flags" >> "$GITHUB_OUTPUT"
