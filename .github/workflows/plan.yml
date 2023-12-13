@@ -346,10 +346,12 @@ jobs:
         if: success() || failure()
         run: |-
           if [[ -f tfsec.json ]]; then
-            echo 'flags="--format=checkstyle --config-file tfsec.json"' >> "$GITHUB_OUTPUT"
+            flags="--format=checkstyle --config-file tfsec.json"
           else
-            echo 'flags="--format=checkstyle"' >> "$GITHUB_OUTPUT"
+            flags="--format=checkstyle"
           fi
+          echo "Setting flags: $flags"
+          echo "flags=$flags" >> "$GITHUB_OUTPUT"
 
       - name: tfsec
         if: success() || failure()
@@ -358,4 +360,4 @@ jobs:
           reporter: github-pr-review
           fail_on_error: "false"
           filter_mode: "nofilter" # Check all files, not just the diff
-          tfsec_flags: ${{ steps.get_tfsec_flags.outputs.flags }}
+          tfsec_flags: "${{ steps.get_tfsec_flags.outputs.flags }}"
