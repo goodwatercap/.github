@@ -341,6 +341,15 @@ jobs:
               })
             }
 
+      - name: get_tfsec_flags
+        id: get_tfsec_flags
+        if: success() || failure()
+        run: |-
+          if [[ -f tfsec.yml ]]; then
+            echo "flags=\"--config-file tfsec.yml\"" >> "$GITHUB_OUTPUT"
+          else
+            echo "flags=\"\"" >> "$GITHUB_OUTPUT"
+
       - name: tfsec
         if: success() || failure()
         uses: reviewdog/action-tfsec@master
@@ -348,3 +357,4 @@ jobs:
           reporter: github-pr-review
           fail_on_error: "false"
           filter_mode: "nofilter" # Check all files, not just the diff
+          tfsec_flags: ${{ steps.get_tfsec_flags.outputs.flags }}
