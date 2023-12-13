@@ -345,8 +345,8 @@ jobs:
         id: get_tfsec_flags
         if: success() || failure()
         run: |-
-          if [[ -f tfsec.yml ]]; then
-            echo "flags=\"--config-file tfsec.yml\"" >> "$GITHUB_OUTPUT"
+          if [[ -f tfsec.json ]]; then
+            echo "flags=\"--config-file tfsec.json\"" >> "$GITHUB_OUTPUT"
           else
             echo "flags=\"\"" >> "$GITHUB_OUTPUT"
           fi
