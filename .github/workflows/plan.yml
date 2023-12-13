@@ -346,9 +346,9 @@ jobs:
         if: success() || failure()
         run: |-
           if [[ -f tfsec.json ]]; then
-            echo "flags=\"--config-file tfsec.json\"" >> "$GITHUB_OUTPUT"
+            echo 'flags="--config-file tfsec.json'" >> "$GITHUB_OUTPUT"
           else
-            echo "flags=\"\"" >> "$GITHUB_OUTPUT"
+            echo 'flags=""' >> "$GITHUB_OUTPUT"
           fi
 
       - name: tfsec
