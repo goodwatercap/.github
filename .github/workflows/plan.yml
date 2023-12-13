@@ -349,6 +349,7 @@ jobs:
             echo "flags=\"--config-file tfsec.yml\"" >> "$GITHUB_OUTPUT"
           else
             echo "flags=\"\"" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: tfsec
         if: success() || failure()
