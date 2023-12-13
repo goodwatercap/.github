@@ -360,4 +360,5 @@ jobs:
           reporter: github-pr-review
           fail_on_error: "false"
           filter_mode: "nofilter" # Check all files, not just the diff
+          tfsec_version: "v1.28.1"
           tfsec_flags: "${{ steps.get_tfsec_flags.outputs.flags }}"
