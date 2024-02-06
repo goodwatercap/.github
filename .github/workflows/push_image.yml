@@ -63,7 +63,7 @@ on:
 jobs:
   Push:
     env:
-      GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
     runs-on: ubuntu-latest
     steps:
