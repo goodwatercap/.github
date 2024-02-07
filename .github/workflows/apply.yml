@@ -197,12 +197,10 @@ jobs:
         with:
           terraform_version: ${{ steps.get_tf_version.outputs.tf_version }}
           terraform_wrapper: false
-      
+
       - name: Terraform Init
         id: init
         run: |-
-          eval `ssh-agent -s`
-          ssh-add - <<< '${{ secrets.ssh_agent_private_key }}'
           terraform init -backend-config="bucket=${{ secrets.tf_bucket }}" -backend-config="prefix=${{ inputs.tf_prefix }}" -reconfigure
         working-directory: ${{ inputs.tf_working_directory }}
 
