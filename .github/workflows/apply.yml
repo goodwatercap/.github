@@ -198,6 +198,10 @@ jobs:
           terraform_version: ${{ steps.get_tf_version.outputs.tf_version }}
           terraform_wrapper: false
 
+      - name: Sanity check
+        run: |-
+          echo "APP CLIENTID: ${{ secrets.GW_CI_BOT_APP_CLIENTID  }}"
+
       - name: Get application token
         id: get_application_token
         uses: tibdex/github-app-token@v1
