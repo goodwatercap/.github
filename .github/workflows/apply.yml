@@ -63,6 +63,15 @@ on:
       CI_BOT_USERNAME:
         description: GITHUB_USERNAME environment variable to run merge_prs script
         required: false
+      GW_CI_BOT_APP_CLIENTID:
+        description: The GitHub App's client ID
+        required: true
+      GW_CI_BOT_APP_INSTALLATION_ID:
+        description: The GitHub App's installation ID
+        required: true
+      GW_CI_BOT_APP_SECRET:
+        description: The GitHub App's private key
+        required: true
       tf_bucket:
         description: The terraform backend's GCS bucket
         required: true
