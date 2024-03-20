@@ -120,13 +120,13 @@ jobs:
           ssh-private-key: ${{ secrets.ssh_agent_private_key }}
 
       - name: Use System GCloud
-        uses: google-github-actions/setup-gcloud@v1
+        uses: google-github-actions/setup-gcloud@v2
         if: ${{ ! inputs.really_actually_use_k8s }}
         with:
           skip_install: True
 
       - name: Setup GCloud with GKE Auth Plugin
-        uses: google-github-actions/setup-gcloud@v1
+        uses: google-github-actions/setup-gcloud@v2
         if: inputs.really_actually_use_k8s
         with:
           version: '>= 422.0.0'

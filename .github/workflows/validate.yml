@@ -87,7 +87,7 @@ jobs:
         run: terraform validate -no-color
         working-directory: ${{ inputs.tf_working_directory }}
 
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@v7
         if: inputs.post_result_comment && (success() || failure())
         with:
           script: |
