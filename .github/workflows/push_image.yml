@@ -67,7 +67,7 @@ jobs:
       GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           ref:  ${{ inputs.github_ref }}
           fetch-depth: 0
@@ -115,7 +115,7 @@ jobs:
           echo "HEAD is now at SHA: $output"
           echo "::set-output name=stdout::$output"
 
-      - uses: webfactory/ssh-agent@v0.4.1
+      - uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.ssh_agent_private_key }}
 
