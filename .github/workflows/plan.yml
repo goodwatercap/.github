@@ -86,7 +86,7 @@ jobs:
       GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref:  ${{ inputs.github_ref }}
           fetch-depth: 0
@@ -151,19 +151,19 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.ssh_agent_private_key }}
 
-      - uses: google-github-actions/auth@v1
+      - uses: google-github-actions/auth@v2
         with:
           project_id: ${{ secrets.gcp_project_id }}
           credentials_json: ${{ secrets.gcp_service_account_key }}
 
       - name: Use System GCloud
-        uses: google-github-actions/setup-gcloud@v1
+        uses: google-github-actions/setup-gcloud@v2
         if: ${{ ! inputs.really_actually_use_k8s }}
         with:
           skip_install: True
 
       - name: Setup GCloud with GKE Auth Plugin
-        uses: google-github-actions/setup-gcloud@v1
+        uses: google-github-actions/setup-gcloud@v2
         if: inputs.really_actually_use_k8s
         with:
           version: '>= 422.0.0'
@@ -252,7 +252,7 @@ jobs:
         working-directory: ${{ inputs.tf_working_directory }}
         run: echo "Logs trimmed due to size" > full_output.txt
 
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@v7
         if: inputs.post_result_comment && (success() || failure())
         with:
           script: |
