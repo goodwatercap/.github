@@ -41,7 +41,7 @@ jobs:
         with:
           ref:  ${{ inputs.github_ref }}
 
-      - uses: webfactory/ssh-agent@v0.4.1
+      - uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.ssh_agent_private_key }}
 
