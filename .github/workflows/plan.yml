@@ -189,7 +189,7 @@ jobs:
           touch plan_errors.txt
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v1.2.1
+        uses: hashicorp/setup-terraform@v3.0.0
         with:
           terraform_version: ${{ steps.get_tf_version.outputs.tf_version }}
           terraform_wrapper: false
