@@ -3,14 +3,15 @@ const dateFns = require("date-fns");
 
 async function codefreeze() {
   try {
-    const begin = core.getInput("codefreeze-begin", { required: true });
+    const start = core.getInput("codefreeze-begin", { required: true });
     const end = core.getInput("codefreeze-end", { required: true });
+    const allowedApps = core.getInput("allowed-apps");
 
     const now = new Date();
 
     if (
       dateFns.isWithinInterval(now, {
-        start: begin,
+        start,
         end,
       })
     ) {
