@@ -47906,9 +47906,9 @@ var __webpack_exports__ = {};
 /**
  * The entrypoint for the action.
  */
-const { run } = __nccwpck_require__(1713);
+const { codefreeze } = __nccwpck_require__(1713);
 
-run();
+codefreeze();
 
 })();
 
