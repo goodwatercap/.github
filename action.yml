@@ -1,0 +1,16 @@
+name: "Code freeze"
+description: "Util for setting a code freeze in a repo"
+author: "goodwater cap"
+
+# Define your inputs here.
+inputs:
+  codefreeze-begin:
+    description: "The date when the code freeze begins"
+    required: true
+  codefreeze-end:
+    description: "The date when the code freeze ends"
+    required: true
+
+runs:
+  using: node20
+  main: dist/index.js
