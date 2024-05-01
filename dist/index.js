@@ -67496,7 +67496,7 @@ async function codefreeze() {
       })
     ) {
       const allowedPaths = core.getInput("allowed-paths");
-      core.debug(`Allowed paths: ${allowedPaths}`);
+      core.info(`Allowed paths: ${allowedPaths}`);
       // If no apps are specified, just short circuit here and throw an error.
       if (!allowedPaths) {
         throw new Error("Code freeze is in effect for all files.");
