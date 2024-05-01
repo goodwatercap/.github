@@ -1,7 +1,7 @@
 const core = require("@actions/core");
 const dateFns = require("date-fns");
 
-const codefreeze = async () => {
+async function codefreeze() {
   try {
     const begin = core.getInput("codefreeze-begin", { required: true });
     const end = core.getInput("codefreeze-end", { required: true });
@@ -16,6 +16,6 @@ const codefreeze = async () => {
   } catch (err) {
     core.setFailed(err.message);
   }
-};
+}
 
-module.exports = codefreeze;
+module.exports = { codefreeze };
