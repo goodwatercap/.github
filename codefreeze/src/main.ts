@@ -1,9 +1,9 @@
-const core = require("@actions/core");
-const dateFns = require("date-fns");
-const github = require("@actions/github");
-const { some } = require("lodash");
+import * as core from "@actions/core";
+import * as github from "@actions/github";
+import { isWithinInterval } from "date-fns";
+import { some } from "lodash";
 
-async function codefreeze() {
+export async function run(): Promise<void> {
   try {
     const start = core.getInput("codefreeze-begin", { required: true });
     const end = core.getInput("codefreeze-end", { required: true });
@@ -11,7 +11,7 @@ async function codefreeze() {
     const now = new Date();
 
     if (
-      dateFns.isWithinInterval(now, {
+      isWithinInterval(now, {
         start,
         end,
       })
@@ -69,9 +69,18 @@ async function codefreeze() {
         );
       }
 
+      // Ensure that the head commit is ahead of the base commit.
+      if (response.data.status !== "ahead") {
+        core.setFailed(
+          `The head commit for this ${context.eventName} event is not ahead of the base commit.`
+        );
+      }
+
       const files = response.data.files;
       const parsedPaths = allowedPaths.split(/\r|\n/);
+
       core.debug(`Parsed paths: ${parsedPaths}`);
+
       for (const file of files) {
         const filename = file.filename;
         core.debug(`Checking file: ${filename}`);
@@ -93,5 +102,3 @@ async function codefreeze() {
     core.setFailed(err.message);
   }
 }
-
-module.exports = { codefreeze };
