@@ -23,9 +23,8 @@ async function codefreeze() {
         throw new Error("Code freeze is in effect for all files.");
       }
 
-      const client = new github.GitHub(
-        core.getInput("token", { required: true })
-      );
+      const token = core.getInput("token", { required: true });
+      const client = github.getOctokit(token);
 
       const context = github.context;
       // Debug log the payload.
@@ -56,7 +55,7 @@ async function codefreeze() {
       core.info(`Base commit: ${base}`);
       core.info(`Head commit: ${head}`);
 
-      const response = await client.repos.compareCommits({
+      const response = await client.rest.repos.compareCommits({
         base,
         head,
         owner: context.repo.owner,
