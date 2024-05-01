@@ -45998,7 +45998,12 @@ async function codefreeze() {
 
     const now = new Date();
 
-    if (dateFns.isWithinRange(now, begin, end)) {
+    if (
+      dateFns.isWithinInterval(now, {
+        start: begin,
+        end,
+      })
+    ) {
       throw new Error("Code freeze is in effect.");
     } else {
       console.log("Code freeze is not in effect.");
