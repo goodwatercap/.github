@@ -67496,7 +67496,7 @@ async function codefreeze() {
       })
     ) {
       const allowedPaths = core.getInput("allowed-paths");
-      core.info(`Allowed paths: ${allowedPaths}`);
+      core.debug(`Allowed paths: ${allowedPaths}`);
       // If no apps are specified, just short circuit here and throw an error.
       if (!allowedPaths) {
         throw new Error("Code freeze is in effect for all files.");
@@ -67549,10 +67549,15 @@ async function codefreeze() {
       }
 
       const files = response.data.files;
-
+      const parsedPaths = allowedPaths.split(/\r|\n/);
+      core.debug(`Parsed paths: ${parsedPaths}`);
       for (const file of files) {
         const filename = file.filename;
-        const isAllowed = some(allowedPaths, (app) => filename.startsWith(app));
+        core.debug(`Checking file: ${filename}`);
+
+        const isAllowed = some(parsedPaths, (path) => {
+          return filename.startsWith(path);
+        });
 
         if (!isAllowed) {
           throw new Error(
