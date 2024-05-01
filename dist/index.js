@@ -45991,7 +45991,7 @@ exports["default"] = _default;
 const core = __nccwpck_require__(2186);
 const dateFns = __nccwpck_require__(3314);
 
-const codefreeze = async () => {
+async function codefreeze() {
   try {
     const begin = core.getInput("codefreeze-begin", { required: true });
     const end = core.getInput("codefreeze-end", { required: true });
@@ -46006,9 +46006,9 @@ const codefreeze = async () => {
   } catch (err) {
     core.setFailed(err.message);
   }
-};
+}
 
-module.exports = codefreeze;
+module.exports = { codefreeze };
 
 
 /***/ }),
