@@ -67474,106 +67474,121 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 1713:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ 399:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
-const core = __nccwpck_require__(2186);
-const dateFns = __nccwpck_require__(3314);
-const github = __nccwpck_require__(5438);
-const { some } = __nccwpck_require__(250);
+"use strict";
 
-async function codefreeze() {
-  try {
-    const start = core.getInput("codefreeze-begin", { required: true });
-    const end = core.getInput("codefreeze-end", { required: true });
-
-    const now = new Date();
-
-    if (
-      dateFns.isWithinInterval(now, {
-        start,
-        end,
-      })
-    ) {
-      const allowedPaths = core.getInput("allowed-paths");
-      core.debug(`Allowed paths: ${allowedPaths}`);
-      // If no apps are specified, just short circuit here and throw an error.
-      if (!allowedPaths) {
-        throw new Error("Code freeze is in effect for all files.");
-      }
-
-      const token = core.getInput("token", { required: true });
-      const client = github.getOctokit(token);
-
-      const context = github.context;
-      // Debug log the payload.
-      core.debug(`Payload keys: ${Object.keys(context.payload)}`);
-
-      const eventName = context.eventName;
-
-      // Define the base and head commits to be extracted from the payload.
-      let base;
-      let head;
-
-      switch (eventName) {
-        case "pull_request":
-          base = context.payload.pull_request?.base?.sha;
-          head = context.payload.pull_request?.head?.sha;
-          break;
-        case "push":
-          base = context.payload.before;
-          head = context.payload.after;
-          break;
-        default:
-          core.setFailed(
-            `This action only supports pull requests and pushes, ${context.eventName} events are not supported. `
-          );
-      }
-
-      // Log the base and head commits
-      core.info(`Base commit: ${base}`);
-      core.info(`Head commit: ${head}`);
-
-      const response = await client.rest.repos.compareCommits({
-        base,
-        head,
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-      });
-
-      // Ensure that the request was successful.
-      if (response.status !== 200) {
-        core.setFailed(
-          `The GitHub API for comparing the base and head commits for this ${context.eventName} event returned ${response.status}, expected 200. `
-        );
-      }
-
-      const files = response.data.files;
-      const parsedPaths = allowedPaths.split(/\r|\n/);
-      core.debug(`Parsed paths: ${parsedPaths}`);
-      for (const file of files) {
-        const filename = file.filename;
-        core.debug(`Checking file: ${filename}`);
-
-        const isAllowed = some(parsedPaths, (path) => {
-          return filename.startsWith(path);
-        });
-
-        if (!isAllowed) {
-          throw new Error(
-            `The file ${filename} is not allowed to be changed during a code freeze.`
-          );
-        }
-      }
-    } else {
-      console.log("Code freeze is not in effect.");
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
     }
-  } catch (err) {
-    core.setFailed(err.message);
-  }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.run = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const github = __importStar(__nccwpck_require__(5438));
+const date_fns_1 = __nccwpck_require__(3314);
+const lodash_1 = __nccwpck_require__(250);
+async function run() {
+    try {
+        const start = core.getInput("codefreeze-begin", { required: true });
+        const end = core.getInput("codefreeze-end", { required: true });
+        const now = new Date();
+        if ((0, date_fns_1.isWithinInterval)(now, {
+            start,
+            end,
+        })) {
+            const allowedPaths = core.getInput("allowed-paths");
+            core.debug(`Allowed paths: ${allowedPaths}`);
+            // If no apps are specified, just short circuit here and throw an error.
+            if (!allowedPaths) {
+                throw new Error("Code freeze is in effect for all files.");
+            }
+            const token = core.getInput("token", { required: true });
+            const client = github.getOctokit(token);
+            const context = github.context;
+            // Debug log the payload.
+            core.debug(`Payload keys: ${Object.keys(context.payload)}`);
+            const eventName = context.eventName;
+            // Define the base and head commits to be extracted from the payload.
+            let base;
+            let head;
+            switch (eventName) {
+                case "pull_request":
+                    base = context.payload.pull_request?.base?.sha;
+                    head = context.payload.pull_request?.head?.sha;
+                    break;
+                case "push":
+                    base = context.payload.before;
+                    head = context.payload.after;
+                    break;
+                default:
+                    core.setFailed(`This action only supports pull requests and pushes, ${context.eventName} events are not supported. `);
+            }
+            // Log the base and head commits
+            core.info(`Base commit: ${base}`);
+            core.info(`Head commit: ${head}`);
+            const response = await client.rest.repos.compareCommits({
+                base,
+                head,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+            });
+            // Ensure that the request was successful.
+            if (response.status !== 200) {
+                core.setFailed(`The GitHub API for comparing the base and head commits for this ${context.eventName} event returned ${response.status}, expected 200. `);
+            }
+            // Ensure that the head commit is ahead of the base commit.
+            if (response.data.status !== "ahead") {
+                core.setFailed(`The head commit for this ${context.eventName} event is not ahead of the base commit.`);
+            }
+            const files = response.data.files;
+            const parsedPaths = allowedPaths.split(/\r|\n/);
+            core.debug(`Parsed paths: ${parsedPaths}`);
+            if (!files) {
+                core.info("No staged files. Exiting.");
+                return;
+            }
+            for (const file of files) {
+                const filename = file.filename;
+                core.debug(`Checking file: ${filename}`);
+                const isAllowed = (0, lodash_1.some)(parsedPaths, (path) => {
+                    return filename.startsWith(path);
+                });
+                if (!isAllowed) {
+                    throw new Error(`The file ${filename} is not allowed to be changed during a code freeze.`);
+                }
+            }
+        }
+        else {
+            core.info("Code freeze is not in effect.");
+        }
+    }
+    catch (err) {
+        if (err instanceof Error)
+            core.setFailed(err.message);
+    }
 }
-
-module.exports = { codefreeze };
+exports.run = run;
 
 
 /***/ }),
@@ -69478,14 +69493,17 @@ module.exports = parseParams
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
 (() => {
+"use strict";
+var exports = __webpack_exports__;
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
 /**
  * The entrypoint for the action.
  */
-const { codefreeze } = __nccwpck_require__(1713);
-
-codefreeze();
+const main_1 = __nccwpck_require__(399);
+(0, main_1.run)();
 
 })();
 

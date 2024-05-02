@@ -80,6 +80,10 @@ export async function run(): Promise<void> {
       const parsedPaths = allowedPaths.split(/\r|\n/);
 
       core.debug(`Parsed paths: ${parsedPaths}`);
+      if (!files) {
+        core.info("No staged files. Exiting.");
+        return;
+      }
 
       for (const file of files) {
         const filename = file.filename;
@@ -96,9 +100,9 @@ export async function run(): Promise<void> {
         }
       }
     } else {
-      console.log("Code freeze is not in effect.");
+      core.info("Code freeze is not in effect.");
     }
   } catch (err) {
-    core.setFailed(err.message);
+    if (err instanceof Error) core.setFailed(err.message);
   }
 }
