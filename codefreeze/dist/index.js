@@ -67578,6 +67578,7 @@ async function run() {
                     throw new Error(`The file ${filename} is not allowed to be changed during a code freeze.`);
                 }
             }
+            core.info("All staged files are allowed to be changed during a code freeze.");
         }
         else {
             core.info("Code freeze is not in effect.");

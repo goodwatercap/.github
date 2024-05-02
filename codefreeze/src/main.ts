@@ -99,6 +99,9 @@ export async function run(): Promise<void> {
           );
         }
       }
+      core.info(
+        "All staged files are allowed to be changed during a code freeze."
+      );
     } else {
       core.info("Code freeze is not in effect.");
     }
