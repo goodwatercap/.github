@@ -103,7 +103,7 @@ describe("action", () => {
               case "codefreeze-end":
                 return "2021-01-10T00:00:00Z";
               case "allowed-paths":
-                return "apps/wellspring";
+                return "apps/wellspring, apps/concierge";
               default:
                 return "";
             }
@@ -129,7 +129,7 @@ describe("action", () => {
               case "codefreeze-end":
                 return "2021-01-10T00:00:00Z";
               case "allowed-paths":
-                return "apps/concierge";
+                return "apps/concierge,./github";
               default:
                 return "";
             }

@@ -67562,7 +67562,7 @@ async function run() {
                 core.setFailed(`The head commit for this ${context.eventName} event is not ahead of the base commit.`);
             }
             const files = response.data.files;
-            const parsedPaths = allowedPaths.split(/\r|\n/);
+            const parsedPaths = allowedPaths.split(",").map((path) => path.trim());
             core.debug(`Parsed paths: ${parsedPaths}`);
             if (!files) {
                 core.info("No staged files. Exiting.");
