@@ -67562,7 +67562,7 @@ async function run() {
                 core.setFailed(`The head commit for this ${context.eventName} event is not ahead of the base commit.`);
             }
             const files = response.data.files;
-            const parsedPaths = allowedPaths.split(/\r|\n/);
+            const parsedPaths = allowedPaths.split(",").map((path) => path.trim());
             core.debug(`Parsed paths: ${parsedPaths}`);
             if (!files) {
                 core.info("No staged files. Exiting.");
@@ -67578,6 +67578,7 @@ async function run() {
                     throw new Error(`The file ${filename} is not allowed to be changed during a code freeze.`);
                 }
             }
+            core.info("All staged files are allowed to be changed during a code freeze.");
         }
         else {
             core.info("Code freeze is not in effect.");
