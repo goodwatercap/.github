@@ -257,11 +257,20 @@ jobs:
         with:
           script: |
             const fs = require('fs')
+            function truncate(text, maxLength) {
+              if (text.length <= maxLength) {
+                return text
+              }
+              const truncatedText = text.substring(0, maxLength)
+              const truncationMessage = `\n\n... (truncated ${text.length - maxLength} characters)`
+              return truncatedText + truncationMessage
+            }
+            const MAX_FULL_OUTPUT_LENGTH = 15000
             const init = fs.readFileSync('${{ inputs.tf_working_directory }}/init.txt', 'utf8')
             const fmt = fs.readFileSync('${{ inputs.tf_working_directory }}/fmt.txt', 'utf8')
             const validate = fs.readFileSync('${{ inputs.tf_working_directory }}/validate.txt', 'utf8')
             const plan_output = fs.readFileSync('${{ inputs.tf_working_directory }}/plan_output.txt', 'utf8')
-            const full_output = fs.readFileSync('${{ inputs.tf_working_directory }}/full_output.txt', 'utf8')
+            const full_output = truncate(fs.readFileSync('${{ inputs.tf_working_directory }}/full_output.txt', 'utf8'), MAX_FULL_OUTPUT_LENGTH)
             const errors = fs.readFileSync('${{ inputs.tf_working_directory }}/plan_errors.txt', 'utf8')
 
             const issue_number = "${{ inputs.pr_issue_number }}" || context.issue.number
