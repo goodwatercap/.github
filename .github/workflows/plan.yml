@@ -266,9 +266,9 @@ jobs:
               return truncatedText + truncationMessage
             }
             const MAX_FULL_OUTPUT_LENGTH = 15000
-            const init = fs.readFileSync('${{ inputs.tf_working_directory }}/init.txt', 'utf8')
-            const fmt = fs.readFileSync('${{ inputs.tf_working_directory }}/fmt.txt', 'utf8')
-            const validate = fs.readFileSync('${{ inputs.tf_working_directory }}/validate.txt', 'utf8')
+            const init = truncate(fs.readFileSync('${{ inputs.tf_working_directory }}/init.txt', 'utf8'), MAX_FULL_OUTPUT_LENGTH)
+            const fmt = truncate(fs.readFileSync('${{ inputs.tf_working_directory }}/fmt.txt', 'utf8'), MAX_FULL_OUTPUT_LENGTH)
+            const validate = truncate(fs.readFileSync('${{ inputs.tf_working_directory }}/validate.txt', 'utf8'), MAX_FULL_OUTPUT_LENGTH)
             const plan_output = fs.readFileSync('${{ inputs.tf_working_directory }}/plan_output.txt', 'utf8')
             const full_output = truncate(fs.readFileSync('${{ inputs.tf_working_directory }}/full_output.txt', 'utf8'), MAX_FULL_OUTPUT_LENGTH)
             const errors = fs.readFileSync('${{ inputs.tf_working_directory }}/plan_errors.txt', 'utf8')
