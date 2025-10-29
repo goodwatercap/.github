@@ -213,7 +213,7 @@ jobs:
       - name: Terraform Init
         id: init
         run: |-
-          if [[ -z ${{ inputs.tf_upgrade }} ]]; then
+          if [[ "${{ inputs.tf_upgrade }}" == "true" ]]; then
             tf_upgrade="-upgrade"
           else
             tf_upgrade=""
