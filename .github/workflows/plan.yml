@@ -58,6 +58,11 @@ on:
         required: false
         type: string
         default: '.'
+      tf_upgrade:
+        description: Whether to upgrade the Terraform backend
+        required: false
+        type: boolean
+        default: false
     secrets:
       CI_BOT_TOKEN:
         description: GITHUB_TOKEN environment variable to run merge_prs script
@@ -208,7 +213,12 @@ jobs:
       - name: Terraform Init
         id: init
         run: |-
-          terraform init -no-color -backend-config="bucket=${{ secrets.tf_bucket }}" -backend-config="prefix=${{ inputs.tf_prefix }}" -reconfigure 2>&1 | tee init.txt
+          if [[ "${{ inputs.tf_upgrade }}" == "true" ]]; then
+            tf_upgrade="-upgrade"
+          else
+            tf_upgrade=""
+          fi
+          terraform init -no-color $tf_upgrade -backend-config="bucket=${{ secrets.tf_bucket }}" -backend-config="prefix=${{ inputs.tf_prefix }}" -reconfigure 2>&1 | tee init.txt
           exit ${PIPESTATUS[0]}
         working-directory: ${{ inputs.tf_working_directory }}
 
