@@ -127,11 +127,3 @@ jobs:
                 body: output
               })
             }
-
-      - name: tfsec
-        if: success() || failure()
-        uses: reviewdog/action-tfsec@master
-        with:
-          reporter: github-pr-review
-          fail_on_error: "false"
-          filter_mode: "nofilter" # Check all files, not just the diff
