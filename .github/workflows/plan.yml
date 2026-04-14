@@ -9,7 +9,7 @@ on:
         description: Override of GITHUB_REF environment variable (ie, what branch to run tf against)
         required: false
         type: string
-        default: ''
+        default: ""
       merge_prs:
         description: Flag to roll up all open PRs
         required: false
@@ -29,7 +29,7 @@ on:
         description: If set, overrides where to send the comments when posting
         required: false
         type: string
-        default: ''
+        default: ""
       really_actually_use_k8s:
         description: Help with deprecation of k8s parameters
         required: false
@@ -48,7 +48,7 @@ on:
         description: Which version of terraform to use, eg. 1.1.2 or 0.15.5. If unset, reads .terraform-version in the repo root.
         required: false
         type: string
-        default: ''
+        default: ""
       tf_prefix:
         description: The terraform backend's prefix within the GCS bucket
         required: false
@@ -57,7 +57,7 @@ on:
         description: The directory from which to run terraform commands
         required: false
         type: string
-        default: '.'
+        default: "."
       tf_upgrade:
         description: Whether to upgrade the Terraform backend
         required: false
@@ -91,9 +91,9 @@ jobs:
       GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
-          ref:  ${{ inputs.github_ref }}
+          ref: ${{ inputs.github_ref }}
           fetch-depth: 0
 
       - name: User config
@@ -171,7 +171,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         if: inputs.really_actually_use_k8s
         with:
-          version: '>= 422.0.0'
+          version: ">= 422.0.0"
           install_components: "gke-gcloud-auth-plugin"
 
       # Get the GKE credentials, so we can plan against the cluster
