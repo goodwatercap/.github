@@ -1,7 +1,6 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import { isWithinInterval } from "date-fns";
-import { some } from "lodash";
 
 export async function run(): Promise<void> {
   try {
@@ -89,9 +88,9 @@ export async function run(): Promise<void> {
         const filename = file.filename;
         core.debug(`Checking file: ${filename}`);
 
-        const isAllowed = some(parsedPaths, (path) => {
-          return filename.startsWith(path);
-        });
+        const isAllowed = parsedPaths.some((path) =>
+          filename.startsWith(path)
+        );
 
         if (!isAllowed) {
           throw new Error(
