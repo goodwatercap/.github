@@ -14,7 +14,6 @@
     "test": "jest"
   },
   "jest": {
-    "preset": "ts-jest",
     "verbose": true,
     "clearMocks": true,
     "testEnvironment": "node",
@@ -29,9 +28,22 @@
       "/node_modules/",
       "/dist/"
     ],
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
     "transform": {
-      "^.+\\.ts$": "ts-jest"
-    }
+      "^.+\\.[jt]s$": ["ts-jest", {
+        "tsconfig": {
+          "allowJs": true,
+          "esModuleInterop": true,
+          "module": "node16",
+          "moduleResolution": "node16"
+        }
+      }]
+    },
+    "transformIgnorePatterns": [
+      "node_modules/(?!.*(@octokit|universal-user-agent|before-after-hook|date-fns)/)"
+    ]
   },
   "license": "MIT",
   "dependencies": {
