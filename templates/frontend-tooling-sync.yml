@@ -1,6 +1,6 @@
 # Drop-in template for consumers of @goodwatercap/* tooling (core-frontend,
-# labs, labs-public). Save this file as `.github/workflows/sync-tooling.yml`
-# in the consumer repo.
+# labs). Save this file as `.github/workflows/sync-tooling.yml` in the
+# consumer repo.
 #
 # What it does:
 #   Listens for the `frontend-tooling-released` repository_dispatch event
