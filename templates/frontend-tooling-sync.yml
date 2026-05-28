@@ -10,9 +10,9 @@
 #
 # What it needs:
 #   - `secrets: inherit` passes the GW CI Bot App secrets through. The
-#     consumer must already have GW_CI_BOT_APP_CLIENTID,
-#     GW_CI_BOT_APP_INSTALLATION_ID, and GW_CI_BOT_APP_SECRET configured
-#     (used by terraform plan/apply workflows already).
+#     consumer must already have GW_CI_BOT_APP_CLIENTID and
+#     GW_CI_BOT_APP_SECRET configured (org-level secrets used by the
+#     terraform plan/apply workflows already).
 #   - `packages: read` on the job so the consumer's GITHUB_TOKEN can pull
 #     @goodwatercap/* from GHPR during `pnpm install`. This requires the
 #     individual GHPR packages to grant Actions read access to this repo —
