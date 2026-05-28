@@ -1,0 +1,109 @@
+# Frontend-tooling consumer sync (reusable workflow).
+#
+# Used by core-frontend / labs to react to `frontend-tooling-released`
+# repository_dispatch events. The caller's stub delegates here so the
+# propagation logic lives in exactly one place.
+#
+# Consumer stub (see templates/frontend-tooling-sync.yml):
+#
+#   jobs:
+#     sync:
+#       uses: goodwatercap/.github/.github/workflows/sync-consumer.yml@main
+#       secrets: inherit
+#
+# Auth model:
+#   - GW CI Bot App token (minted via actions/create-github-app-token) drives:
+#       - the cross-repo checkout of goodwatercap/frontend-tooling
+#       - `git push` of the sync branch into the consumer
+#       - `gh pr create` against the consumer
+#     The App is the org's canonical cross-repo identity (same App that
+#     apply.yml/plan.yml use). Using the App for PR creation also means the
+#     consumer's existing `pull_request` workflows DO fire on the auto-PR,
+#     unlike PRs opened with the default GITHUB_TOKEN.
+#   - The caller's GITHUB_TOKEN handles GHPR auth for `pnpm install`. Written
+#     into ~/.npmrc via `npm config set` ahead of install, matching the
+#     pattern used by core-frontend's own composite setup-node action. This
+#     relies on the @goodwatercap/* packages granting Actions read to the
+#     calling consumer (configured per-package on the GHPR settings page).
+
+name: Frontend-tooling sync (reusable)
+
+on:
+  workflow_call:
+    secrets:
+      GW_CI_BOT_APP_CLIENTID:
+        required: true
+      GW_CI_BOT_APP_SECRET:
+        required: true
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint GW CI Bot App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 #v3.2
+        with:
+          app-id: ${{ secrets.GW_CI_BOT_APP_CLIENTID }}
+          private-key: ${{ secrets.GW_CI_BOT_APP_SECRET }}
+          # Owner-scoped so the token can access both the consumer (push,
+          # gh pr create) and frontend-tooling (cross-repo checkout).
+          owner: goodwatercap
+
+      - name: Check out consumer (caller)
+        uses: actions/checkout@v6
+        with:
+          path: consumer
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Check out frontend-tooling
+        uses: actions/checkout@v6
+        with:
+          repository: goodwatercap/frontend-tooling
+          ref: main
+          path: frontend-tooling
+          token: ${{ steps.app-token.outputs.token }}
+
+      - uses: pnpm/action-setup@v6
+        with:
+          cache: true
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: frontend-tooling/.nvmrc
+          cache: pnpm
+          cache-dependency-path: frontend-tooling/pnpm-lock.yaml
+
+      - name: Configure GHPR auth
+        # Writes the consumer's GITHUB_TOKEN into ~/.npmrc so both pnpm installs
+        # below (frontend-tooling here + the consumer install that sync-and-pr
+        # runs) can fetch @goodwatercap/* from GHPR. Mirrors the pattern in
+        # core-frontend/.github/actions/setup-node.
+        run: npm config set "//npm.pkg.github.com/:_authToken" "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Install frontend-tooling deps
+        working-directory: frontend-tooling
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure git identity as goodwater-ci-bot
+        working-directory: consumer
+        # Values from `GET /users/goodwater-ci-bot[bot]`. Stable; update only
+        # if the App is renamed or rotated.
+        run: |
+          git config user.name "goodwater-ci-bot[bot]"
+          git config user.email "159394277+goodwater-ci-bot[bot]@users.noreply.github.com"
+
+      - name: Run sync-and-pr
+        working-directory: frontend-tooling
+        env:
+          # gh pr create + git push run against the consumer; the App token
+          # opens the PR (so consumer's pull_request workflows fire) and pushes
+          # the branch (consumer checkout was already configured with this
+          # token, so git push reuses it). GHPR auth for the consumer's
+          # `pnpm install` is already in ~/.npmrc from the earlier step.
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: pnpm sync-and-pr ../consumer
