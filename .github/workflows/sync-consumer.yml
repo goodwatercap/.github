@@ -84,12 +84,20 @@ jobs:
           cache: pnpm
           cache-dependency-path: frontend-tooling/pnpm-lock.yaml
 
-      - name: Configure GHPR auth
-        # Writes the consumer's GITHUB_TOKEN into ~/.npmrc so both pnpm installs
-        # below (frontend-tooling here + the consumer install that sync-and-pr
-        # runs) can fetch @goodwatercap/* from GHPR. Mirrors the pattern in
-        # core-frontend/.github/actions/setup-node.
-        run: npm config set "//npm.pkg.github.com/:_authToken" "${{ secrets.GITHUB_TOKEN }}"
+      - name: Configure registry auth
+        # GHPR auth is always required (every consumer pulls @goodwatercap/*).
+        # Font Awesome auth is only set if the consumer has the token secret
+        # — core-frontend uses it, labs doesn't. If FONTAWESOME_PACKAGE_TOKEN
+        # is unset on the consumer the env var is empty and we skip those lines.
+        env:
+          FONTAWESOME_TOKEN: ${{ secrets.FONTAWESOME_PACKAGE_TOKEN }}
+        run: |
+          npm config set "//npm.pkg.github.com/:_authToken" "${{ secrets.GITHUB_TOKEN }}"
+          if [[ -n "$FONTAWESOME_TOKEN" ]]; then
+            npm config set "@fortawesome:registry" https://npm.fontawesome.com/
+            npm config set "@awesome.me:registry" https://npm.fontawesome.com/
+            npm config set "//npm.fontawesome.com/:_authToken" "$FONTAWESOME_TOKEN"
+          fi
 
       - name: Install frontend-tooling deps
         working-directory: frontend-tooling
