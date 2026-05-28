@@ -70,11 +70,13 @@ jobs:
 
       - uses: pnpm/action-setup@v6
         with:
-          cache: true
           # The lockfile committed by sync-and-pr is the consumer's, so honor
           # the consumer's pinned pnpm version (the one its own CI uses to
           # read that lockfile back).
           package_json_file: consumer/package.json
+          # `cache: true` here would race ahead of any install and fail to
+          # resolve the store path on a fresh runner. setup-node below caches
+          # the pnpm store via `cache: pnpm` instead.
 
       - uses: actions/setup-node@v6
         with:
