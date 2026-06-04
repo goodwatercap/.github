@@ -55,13 +55,13 @@ jobs:
           owner: goodwatercap
 
       - name: Check out consumer (caller)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.2
         with:
           path: consumer
           token: ${{ steps.app-token.outputs.token }}
 
       - name: Check out frontend-tooling
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.2
         with:
           repository: goodwatercap/frontend-tooling
           ref: main
