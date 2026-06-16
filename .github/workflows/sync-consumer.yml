@@ -68,7 +68,7 @@ jobs:
           path: frontend-tooling
           token: ${{ steps.app-token.outputs.token }}
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v6.0.8
         with:
           # The lockfile committed by sync-and-pr is the consumer's, so honor
           # the consumer's pinned pnpm version (the one its own CI uses to
