@@ -55,13 +55,13 @@ jobs:
           owner: goodwatercap
 
       - name: Check out consumer (caller)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: consumer
           token: ${{ steps.app-token.outputs.token }}
 
       - name: Check out frontend-tooling
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: goodwatercap/frontend-tooling
           ref: main
@@ -78,7 +78,7 @@ jobs:
           # resolve the store path on a fresh runner. setup-node below caches
           # the pnpm store via `cache: pnpm` instead.
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v6.4.0
         with:
           node-version-file: frontend-tooling/.nvmrc
           cache: pnpm
