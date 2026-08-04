@@ -55,20 +55,20 @@ jobs:
           owner: goodwatercap
 
       - name: Check out consumer (caller)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: consumer
           token: ${{ steps.app-token.outputs.token }}
 
       - name: Check out frontend-tooling
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: goodwatercap/frontend-tooling
           ref: main
           path: frontend-tooling
           token: ${{ steps.app-token.outputs.token }}
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v6.0.9
         with:
           # The lockfile committed by sync-and-pr is the consumer's, so honor
           # the consumer's pinned pnpm version (the one its own CI uses to
@@ -78,7 +78,7 @@ jobs:
           # resolve the store path on a fresh runner. setup-node below caches
           # the pnpm store via `cache: pnpm` instead.
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: frontend-tooling/.nvmrc
           cache: pnpm
