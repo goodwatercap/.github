@@ -67,8 +67,8 @@ on:
         description: The GitHub App's client ID
         required: true
       GW_CI_BOT_APP_INSTALLATION_ID:
-        description: The GitHub App's installation ID
-        required: true
+        description: Unused (installation is resolved automatically); kept so existing callers that pass it don't break.
+        required: false
       GW_CI_BOT_APP_SECRET:
         description: The GitHub App's private key
         required: true
@@ -96,7 +96,7 @@ jobs:
       GITHUB_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           ref: ${{ inputs.github_ref }}
           fetch-depth: 0
@@ -157,27 +157,27 @@ jobs:
             echo "tf_version=$input_version" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: webfactory/ssh-agent@v0.9.0
+      - uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
         with:
           ssh-private-key: ${{ secrets.ssh_agent_private_key }}
 
-      - uses: webfactory/ssh-agent@v0.9.0
+      - uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
         with:
           ssh-private-key: ${{ secrets.ssh_agent_private_key }}
 
-      - uses: google-github-actions/auth@v2
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           project_id: ${{ secrets.gcp_project_id }}
           credentials_json: ${{ secrets.gcp_service_account_key }}
 
       - name: Use System GCloud
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
         if: ${{ ! inputs.really_actually_use_k8s }}
         with:
           skip_install: True
 
       - name: Setup GCloud with GKE Auth Plugin
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
         if: inputs.really_actually_use_k8s
         with:
           version: ">= 422.0.0"
@@ -202,7 +202,7 @@ jobs:
           touch full_output.txt
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3.0.0
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
         with:
           terraform_version: ${{ steps.get_tf_version.outputs.tf_version }}
           terraform_wrapper: false
@@ -213,14 +213,16 @@ jobs:
 
       - name: Get application token
         id: get_application_token
-        uses: tibdex/github-app-token@v1
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 #v3.2
         with:
-          app_id: ${{ secrets.GW_CI_BOT_APP_CLIENTID }}
-          installation_id: ${{ secrets.GW_CI_BOT_APP_INSTALLATION_ID }}
-          private_key: ${{ secrets.GW_CI_BOT_APP_SECRET }}
+          client-id: ${{ secrets.GW_CI_BOT_APP_CLIENTID }}
+          private-key: ${{ secrets.GW_CI_BOT_APP_SECRET }}
+          # Owner-scoped so terraform init can fetch modules from other org repos
+          # (matches the previous installation-wide token from tibdex/github-app-token).
+          owner: goodwatercap
 
       - name: Extend Git credentials
-        uses: de-vri-es/setup-git-credentials@v2.1.2
+        uses: de-vri-es/setup-git-credentials@5dd446b3857806f44ea73acf83c193190a385d63 # v2.2.0
         with:
           credentials: https://user:${{ steps.get_application_token.outputs.token }}@github.com
 
@@ -266,7 +268,7 @@ jobs:
           exit $tf_status
         working-directory: ${{ inputs.tf_working_directory }}
 
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         if: inputs.post_result_comment && (success() || failure())
         with:
           script: |
